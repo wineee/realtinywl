@@ -36,6 +36,24 @@ Item {
             }
         }
 
+        let layer = QmlHelper.layerSurfaceManager.getIf(layerComponent, finder)
+        if (layer) {
+            return {
+                shell: layer,
+                item: layer.surfaceItem,
+                type: "layer"
+            }
+        }
+
+        let xwayland = QmlHelper.xwaylandSurfaceManager.getIf(xwaylandComponent, finder)
+        if (xwayland) {
+            return {
+                shell: xwayland,
+                item: xwayland,
+                type: "xwayland"
+            }
+        }
+
         return null
     }
 
@@ -58,16 +76,9 @@ Item {
                 id: toplevelSurfaceItem
 
                 property var doDestroy: helper.doDestroy
-
                 resizeMode: SurfaceItem.SizeToSurface
-                z: (waylandSurface && waylandSurface.isActivated) ? 1 : 0
-
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumWidth: Math.max(toplevelSurfaceItem.minimumSize.width, 100)
-                Layout.minimumHeight: Math.max(toplevelSurfaceItem.minimumSize.height, 50)
-                Layout.maximumWidth: toplevelSurfaceItem.maximumSize.width
-                Layout.maximumHeight: toplevelSurfaceItem.maximumSize.height
                 Layout.horizontalStretchFactor: 1
                 Layout.verticalStretchFactor: 1
 
@@ -180,6 +191,91 @@ Item {
                     }
                 }
             }
+        }
+
+        DynamicCreatorComponent {
+            id: xwaylandComponent
+            creator: QmlHelper.xwaylandSurfaceManager
+            autoDestroy: false
+
+            onObjectRemoved: function (obj) {
+                obj.doDestroy()
+            }
+
+            XWaylandSurfaceItem {
+                id: xwaylandSurfaceItem
+
+                required property XWaylandSurface waylandSurface
+                property var doDestroy: helper.doDestroy
+
+                surface: waylandSurface
+                resizeMode: SurfaceItem.SizeToSurface
+                // TODO: Support popup/menu
+                positionMode: xwaylandSurfaceItem.effectiveVisible ? XWaylandSurfaceItem.PositionToSurface : XWaylandSurfaceItem.ManualPosition
+                z: (waylandSurface && waylandSurface.isActivated) ? 1 : 0
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumWidth: Math.max(xwaylandSurfaceItem.minimumSize.width, 100)
+                Layout.minimumHeight: Math.max(xwaylandSurfaceItem.minimumSize.height, 50)
+                Layout.maximumWidth: xwaylandSurfaceItem.maximumSize.width
+                Layout.maximumHeight: xwaylandSurfaceItem.maximumSize.height
+                Layout.horizontalStretchFactor: 1
+                Layout.verticalStretchFactor: 1
+
+                OutputLayoutItem {
+                    anchors.fill: parent
+                    layout: QmlHelper.layout
+
+                    onEnterOutput: function(output) {
+                        if (xwaylandSurfaceItem.waylandSurface.surface)
+                            xwaylandSurfaceItem.waylandSurface.surface.enterOutput(output);
+                        Helper.onSurfaceEnterOutput(waylandSurface, xwaylandSurfaceItem, output)
+                    }
+                    onLeaveOutput: function(output) {
+                        if (xwaylandSurfaceItem.waylandSurface.surface)
+                            xwaylandSurfaceItem.waylandSurface.surface.leaveOutput(output);
+                        Helper.onSurfaceLeaveOutput(waylandSurface, xwaylandSurfaceItem, output)
+                    }
+                }
+
+                TiledToplevelHelper {
+                    id: helper
+
+                    surface: xwaylandSurfaceItem
+                    waylandSurface: surface.waylandSurface
+                    creator: xwaylandComponent
+                }
+            }
+        }
+    }
+
+    DynamicCreatorComponent {
+        id: layerComponent
+        creator: QmlHelper.layerSurfaceManager
+        autoDestroy: false
+
+        onObjectRemoved: function (obj) {
+            obj.doDestroy()
+        }
+
+        LayerSurface {
+            id: layerSurface
+            creator: layerComponent
+        }
+    }
+
+    DynamicCreatorComponent {
+        id: inputPopupComponent
+        creator: QmlHelper.inputPopupSurfaceManager
+
+        InputPopupSurface {
+            required property InputMethodHelper inputMethodHelper
+            required property WaylandInputPopupSurface popupSurface
+
+            id: inputPopupSurface
+            surface: popupSurface
+            helper: inputMethodHelper
         }
     }
 }

@@ -1,41 +1,15 @@
 {
   "nodes": {
-    "ddm": {
-      "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nix-filter": [
-          "nix-filter"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1715673160,
-        "narHash": "sha256-SAzEl+Ird+x6Tgm07bP8pAn3LUF3h0CyWXa3cKo4BkM=",
-        "owner": "linuxdeepin",
-        "repo": "ddm",
-        "rev": "5600193f5825cab3ab4d30e33de2cef05b1b8a13",
-        "type": "github"
-      },
-      "original": {
-        "owner": "linuxdeepin",
-        "repo": "ddm",
-        "type": "github"
-      }
-    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1710146030,
-        "narHash": "sha256-SZ5L6eA7HJ/nmkzGG7/ISclqe6oZdOZTNoesiInkXPQ=",
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "b1d9ab70662946ef0850d488da1c9019f3a9752a",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
         "type": "github"
       },
       "original": {
@@ -46,11 +20,11 @@
     },
     "nix-filter": {
       "locked": {
-        "lastModified": 1710156097,
-        "narHash": "sha256-1Wvk8UP7PXdf8bCCaEoMnOT1qe5/Duqgj+rL8sRQsSM=",
+        "lastModified": 1731533336,
+        "narHash": "sha256-oRam5PS1vcrr5UPgALW0eo1m/5/pls27Z/pabHNy2Ms=",
         "owner": "numtide",
         "repo": "nix-filter",
-        "rev": "3342559a24e85fc164b295c3444e8a139924675b",
+        "rev": "f7653272fd234696ae94229839a99b73c9ab7de0",
         "type": "github"
       },
       "original": {
@@ -61,56 +35,25 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1715677756,
-        "narHash": "sha256-Cd3YOc/cMYKnc/15iB3Lzz3qYgWp4+a50BfTW5mDe5o=",
+        "lastModified": 1741851582,
+        "narHash": "sha256-cPfs8qMccim2RBgtKGF+x9IBCduRvd/N5F4nYpU0TVE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6b5afbf413cd21eb0a98d4ed1c48d61585c741eb",
+        "rev": "6607cf789e541e7873d40d3a8f7815ea92204f32",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "master",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "qwlroots": {
-      "inputs": {
-        "flake-utils": [
-          "waylib",
-          "flake-utils"
-        ],
-        "nix-filter": [
-          "waylib",
-          "nix-filter"
-        ],
-        "nixpkgs": [
-          "waylib",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1704874869,
-        "narHash": "sha256-NAUmwMOzH2XGn2iFZVbj4o91nP3/Fp2f3BnUEzVetUs=",
-        "owner": "vioken",
-        "repo": "qwlroots",
-        "rev": "dd9c126499ed474eb7a7534c945798c4b07ef4b7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "vioken",
-        "repo": "qwlroots",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
-        "ddm": "ddm",
         "flake-utils": "flake-utils",
         "nix-filter": "nix-filter",
-        "nixpkgs": "nixpkgs",
-        "waylib": "waylib"
+        "nixpkgs": "nixpkgs"
       }
     },
     "systems": {
@@ -125,33 +68,6 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "waylib": {
-      "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nix-filter": [
-          "nix-filter"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "qwlroots": "qwlroots"
-      },
-      "locked": {
-        "lastModified": 1715651427,
-        "narHash": "sha256-DqSfCGH6e2omU4FP8wdNcfx4Sm7h2yh2T04E1MRKp2Q=",
-        "owner": "vioken",
-        "repo": "waylib",
-        "rev": "7e9c01424c78378f596617429d243b1c448b1b6a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "vioken",
-        "repo": "waylib",
         "type": "github"
       }
     }
