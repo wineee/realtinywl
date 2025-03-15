@@ -3,7 +3,7 @@
 
 import QtQuick
 import Waylib.Server
-import Tinywl
+import WayGreet
 
 Item {
     id: root

@@ -4,7 +4,7 @@
 import QtQuick
 import QtQuick.Controls
 import Waylib.Server
-import Tinywl
+import WayGreet
 
 OutputItem {
     id: rootOutputItem

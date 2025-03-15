@@ -11,8 +11,8 @@
 
 QmlEngine::QmlEngine(QObject *parent)
     : QQmlApplicationEngine(parent)
-    , surfaceContent(this, "Tinywl", "SurfaceContent")
-    , menuBarComponent(this, "Tinywl", "OutputMenuBar")
+    , surfaceContent(this, "WayGreet", "SurfaceContent")
+    , menuBarComponent(this, "WayGreet", "OutputMenuBar")
 {
 }
 

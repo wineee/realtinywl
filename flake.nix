@@ -13,12 +13,12 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
 
-          tinywl = pkgs.qt6Packages.callPackage ./nix {
+          waygreet = pkgs.qt6Packages.callPackage ./nix {
             nix-filter = nix-filter.lib;
           };
         in
         {
-          packages.default = tinywl;
+          packages.default = waygreet;
 
           devShells.default = pkgs.mkShell {
             inputsFrom = [

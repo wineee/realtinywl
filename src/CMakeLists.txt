@@ -18,15 +18,15 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
 pkg_search_module(WAYLAND REQUIRED IMPORTED_TARGET wayland-server)
 
-set(TARGET tinywl-qtquick)
+set(TARGET waygreet)
 
 add_executable(${TARGET}
     main.cpp
 )
 
 qt_add_qml_module(${TARGET}
-    URI Tinywl
-    VERSION "2.0"
+    URI WayGreet
+    VERSION "1.0"
 
     SOURCES helper.h helper.cpp
     SOURCES surfacewrapper.h surfacewrapper.cpp

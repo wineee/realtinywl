@@ -17,7 +17,7 @@
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  pname = "treeland";
+  pname = "WayGreet";
   version = "0.2.2";
 
   src = nix-filter.filter {
@@ -52,8 +52,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = {
     description = "Wayland greeter for greetd";
-    homepage = "https://github.com/vioken/treeland";
-    license = with lib.licenses; [ gpl3Only lgpl3Only asl20 ];
+    homepage = "https://github.com/wineee/WayGreet";
+    license = with lib.licenses; [ gpl3Plus ];
     platforms = lib.platforms.linux;
     maintainers = with lib.maintainers; [ rewine ];
   };

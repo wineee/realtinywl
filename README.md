@@ -1,0 +1,3 @@
+# WayGreet
+
+A simple greeter for greetd, still in develop...

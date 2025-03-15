@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
             qApp->exit(code);
         });
 
-        Helper *helper = qmlEngine.singletonInstance<Helper*>("Tinywl", "Helper");
+        Helper *helper = qmlEngine.singletonInstance<Helper*>("WayGreet", "Helper");
         helper->init();
 
         quitCode = app.exec();

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
-project (tinywl
+project (WayGreet
   VERSION "0.0.1"
-  DESCRIPTION "dtk based markdown editor"
-  HOMEPAGE_URL "https://github.com/DMarked/DMarked"
-  LANGUAGES CXX C
+  DESCRIPTION "Simple Greeter for greetd"
+  HOMEPAGE_URL "https://github.com/wineee/WayGreet"
+  LANGUAGES CXX
 )
 
 set(CMAKE_CXX_STANDARD 20)
