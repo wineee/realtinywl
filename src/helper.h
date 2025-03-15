@@ -30,7 +30,6 @@ class WOutputItem;
 class WOutputViewport;
 class WOutputLayer;
 class WOutput;
-class WXWayland;
 class WInputMethodHelper;
 class WXdgDecorationManager;
 class WSocket;
@@ -63,7 +62,6 @@ class Helper : public WSeatEventFilter
     Q_PROPERTY(RootSurfaceContainer* rootContainer READ rootContainer CONSTANT FINAL)
     Q_PROPERTY(Workspace* workspace READ workspace CONSTANT FINAL)
     Q_PROPERTY(int currentUserId READ currentUserId WRITE setCurrentUserId NOTIFY currentUserIdChanged FINAL)
-    Q_PROPERTY(float animationSpeed READ animationSpeed WRITE setAnimationSpeed NOTIFY animationSpeedChanged FINAL)
     Q_PROPERTY(OutputMode outputMode READ outputMode WRITE setOutputMode NOTIFY outputModeChanged FINAL)
     QML_ELEMENT
     QML_SINGLETON
@@ -97,9 +95,6 @@ public:
     int currentUserId() const;
     void setCurrentUserId(int uid);
 
-    float animationSpeed() const;
-    void setAnimationSpeed(float newAnimationSpeed);
-
     OutputMode outputMode() const;
     void setOutputMode(OutputMode mode);
 
@@ -107,7 +102,6 @@ public:
 
 public Q_SLOTS:
     void activeSurface(SurfaceWrapper *wrapper);
-    void fakePressSurfaceBottomRightToReszie(SurfaceWrapper *surface);
 
 signals:
     void socketEnabledChanged();
@@ -136,8 +130,6 @@ private:
 
     void setCursorPosition(const QPointF &position);
 
-    bool startDemoClient();
-
     bool beforeDisposeEvent(WSeat *seat, QWindow *watched, QInputEvent *event) override;
     bool afterHandleEvent(WSeat *seat, WSurface *watched, QObject *surfaceItem, QObject *, QInputEvent *event) override;
     bool unacceptedEvent(WSeat *, QWindow *, QInputEvent *event) override;
@@ -146,7 +138,6 @@ private:
 
     // qtquick helper
     WOutputRenderWindow *m_renderWindow = nullptr;
-    QObject *m_windowMenu = nullptr;
 
     // wayland helper
     WServer *m_server = nullptr;
@@ -158,10 +149,7 @@ private:
 
     // protocols
     qw_compositor *m_compositor = nullptr;
-    WXWayland *m_xwayland = nullptr;
     WInputMethodHelper *m_inputMethodHelper = nullptr;
-    WXdgDecorationManager *m_xdgDecorationManager = nullptr;
-    WForeignToplevel *m_foreignToplevel = nullptr;
 
     // privaet data
     QList<Output*> m_outputList;
@@ -177,9 +165,7 @@ private:
     LayerSurfaceContainer *m_overlayContainer = nullptr;
     SurfaceContainer *m_popupContainer = nullptr;
     int m_currentUserId = -1;
-    float m_animationSpeed = 1.0;
     OutputMode m_mode = OutputMode::Extension;
-    std::optional<QPointF> m_fakelastPressedPosition;
 };
 
 Q_DECLARE_OPAQUE_POINTER(RootSurfaceContainer*)

@@ -29,29 +29,10 @@ class QmlEngine : public QQmlApplicationEngine
 public:
     explicit QmlEngine(QObject *parent = nullptr);
 
-    QQuickItem *createTitleBar(SurfaceWrapper *surface, QQuickItem *parent);
-    QQuickItem *createDecoration(SurfaceWrapper *surface, QQuickItem *parent);
-    QObject *createWindowMenu(QObject *parent);
-    QQuickItem *createBorder(SurfaceWrapper *surface, QQuickItem *parent);
-    QQuickItem *createTaskBar(Output *output, QQuickItem *parent);
-    QQuickItem *createShadow(QQuickItem *parent);
-    QQuickItem *createGeometryAnimation(SurfaceWrapper *surface, const QRectF &startGeo,
-                                        const QRectF &endGeo, QQuickItem *parent);
     QQuickItem *createMenuBar(WOutputItem *output, QQuickItem *parent);
-    QQuickItem *createWorkspaceSwitcher(Workspace *parent, WorkspaceModel *from, WorkspaceModel *to);
     QQmlComponent *surfaceContentComponent() { return &surfaceContent; }
-    WallpaperImageProvider *wallpaperImageProvider();
 
 private:
-    QQmlComponent titleBarComponent;
-    QQmlComponent decorationComponent;
-    QQmlComponent windowMenuComponent;
-    QQmlComponent borderComponent;
-    QQmlComponent taskBarComponent;
     QQmlComponent surfaceContent;
-    QQmlComponent shadowComponent;
-    QQmlComponent geometryAnimationComponent;
     QQmlComponent menuBarComponent;
-    QQmlComponent workspaceSwitcher;
-    WallpaperImageProvider *wallpaperProvider = nullptr;
 };

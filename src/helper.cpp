@@ -21,7 +21,6 @@
 #include <WBackend>
 #include <wxdgshell.h>
 #include <wlayershell.h>
-#include <wxwayland.h>
 #include <woutputitem.h>
 #include <wquickcursor.h>
 #include <woutputrenderwindow.h>
@@ -29,7 +28,6 @@
 #include <winputmethodhelper.h>
 #include <WForeignToplevel>
 #include <WXdgOutput>
-#include <wxwaylandsurface.h>
 #include <woutputmanagerv1.h>
 #include <wcursorshapemanagerv1.h>
 #include <woutputitem.h>
@@ -49,7 +47,6 @@
 #include <qwrenderer.h>
 #include <qwcompositor.h>
 #include <qwsubcompositor.h>
-#include <qwxwaylandsurface.h>
 #include <qwlayershellv1.h>
 #include <qwscreencopyv1.h>
 #include <qwfractionalscalemanagerv1.h>
@@ -185,17 +182,11 @@ void Helper::init()
     });
 
     auto *xdgShell = m_server->attach<WXdgShell>(5);
-    m_foreignToplevel = m_server->attach<WForeignToplevel>(xdgShell);
     auto *layerShell = m_server->attach<WLayerShell>(xdgShell);
     auto *xdgOutputManager = m_server->attach<WXdgOutputManager>(m_surfaceContainer->outputLayout());
-    m_windowMenu = engine->createWindowMenu(this);
 
     connect(xdgShell, &WXdgShell::toplevelSurfaceAdded, this, [this] (WXdgToplevelSurface *surface) {
         auto wrapper = new SurfaceWrapper(qmlEngine(), surface, SurfaceWrapper::Type::XdgToplevel);
-        m_foreignToplevel->addSurface(surface);
-
-        wrapper->setNoDecoration(m_xdgDecorationManager->modeBySurface(surface->surface())
-                                 != WXdgDecorationManager::Server);
 
         auto updateSurfaceWithParentContainer = [this, wrapper, surface] {
             if (wrapper->parentSurface())
@@ -217,21 +208,14 @@ void Helper::init()
         surface->safeConnect(&WXdgToplevelSurface::parentXdgSurfaceChanged, this, updateSurfaceWithParentContainer);
         updateSurfaceWithParentContainer();
 
-        connect(wrapper, &SurfaceWrapper::requestShowWindowMenu, m_windowMenu, [this, wrapper] (QPoint pos) {
-            QMetaObject::invokeMethod(m_windowMenu, "showWindowMenu", QVariant::fromValue(wrapper), QVariant::fromValue(pos));
-        });
-
         Q_ASSERT(wrapper->parentItem());
     });
     connect(xdgShell, &WXdgShell::toplevelSurfaceRemoved, this, [this] (WXdgToplevelSurface *surface) {
-        m_foreignToplevel->removeSurface(surface);
         m_surfaceContainer->destroyForSurface(surface->surface());
     });
 
     connect(xdgShell, &WXdgShell::popupSurfaceAdded, this, [this] (WXdgPopupSurface *surface) {
         auto wrapper = new SurfaceWrapper(qmlEngine(), surface, SurfaceWrapper::Type::XdgPopup);
-        wrapper->setNoDecoration(m_xdgDecorationManager->modeBySurface(surface->surface())
-                                 != WXdgDecorationManager::Server);
         auto parent = surface->parentSurface();
         auto parentWrapper = m_surfaceContainer->getSurface(parent);
         parentWrapper->addSubSurface(wrapper);
@@ -246,7 +230,6 @@ void Helper::init()
 
     connect(layerShell, &WLayerShell::surfaceAdded, this, [this] (WLayerSurface *surface) {
         auto wrapper = new SurfaceWrapper(qmlEngine(), surface, SurfaceWrapper::Type::Layer);
-        wrapper->setNoDecoration(true);
         updateLayerSurfaceContainer(wrapper);
 
         connect(surface, &WLayerSurface::layerChanged, this, [this, wrapper] {
@@ -276,84 +259,6 @@ void Helper::init()
     qw_viewporter::create(*m_server->handle());
     m_renderWindow->init(m_renderer, m_allocator);
 
-    // for xwayland
-    auto *xwaylandOutputManager = m_server->attach<WXdgOutputManager>(m_surfaceContainer->outputLayout());
-    xwaylandOutputManager->setScaleOverride(1.0);
-
-    auto xwayland_lazy = true;
-    m_xwayland = m_server->attach<WXWayland>(m_compositor, xwayland_lazy);
-    m_xwayland->setSeat(m_seat);
-
-    xdgOutputManager->setFilter([this] (WClient *client) {
-        return client != m_xwayland->waylandClient();
-    });
-    xwaylandOutputManager->setFilter([this] (WClient *client) {
-        return client == m_xwayland->waylandClient();
-    });
-
-    connect(m_xwayland, &WXWayland::surfaceAdded, this, [this] (WXWaylandSurface *surface) {
-        surface->safeConnect(&qw_xwayland_surface::notify_associate, this, [this, surface] {
-            auto wrapper = new SurfaceWrapper(qmlEngine(), surface, SurfaceWrapper::Type::XWayland);
-
-            // Setup title and decoration
-            auto xwayland = qobject_cast<WXWaylandSurface *>(wrapper->shellSurface());
-            auto updateDecorationTitleBar = [this, wrapper, xwayland]() {
-                if (!xwayland->isBypassManager()) {
-                    wrapper->setNoTitleBar(xwayland->decorationsFlags()
-                                           & WXWaylandSurface::DecorationsNoTitle);
-                    wrapper->setNoDecoration(xwayland->decorationsFlags()
-                                             & WXWaylandSurface::DecorationsNoBorder);
-                } else {
-                    wrapper->setNoTitleBar(true);
-                    wrapper->setNoDecoration(true);
-                }
-            };
-            // When x11 surface dissociate, SurfaceWrapper will be destroyed immediately
-            // but WXWaylandSurface will not, so must connect to `wrapper`
-            connect(xwayland, &WXWaylandSurface::bypassManagerChanged, wrapper, updateDecorationTitleBar);
-            connect(xwayland,
-                    &WXWaylandSurface::decorationsFlagsChanged,
-                    wrapper,
-                    updateDecorationTitleBar);
-            updateDecorationTitleBar();
-
-            // Setup container
-            auto updateSurfaceWithParentContainer = [this, wrapper, surface] {
-                if (wrapper->parentSurface())
-                    wrapper->parentSurface()->removeSubSurface(wrapper);
-                if (wrapper->container())
-                    wrapper->container()->removeSurface(wrapper);
-                auto parent = surface->parentXWaylandSurface();
-                auto parentWrapper = parent ? m_surfaceContainer->getSurface(parent) : nullptr;
-                // x11 surface's parent may not associate
-                if (parentWrapper) {
-                    auto parentWrapper = m_surfaceContainer->getSurface(parent);
-                    auto container = qobject_cast<Workspace *>(parentWrapper->container());
-                    Q_ASSERT(container);
-                    parentWrapper->addSubSurface(wrapper);
-                    container->addSurface(wrapper, parentWrapper->workspaceId());
-                } else {
-                    m_workspace->addSurface(wrapper);
-                }
-            };
-            surface->safeConnect(&WXWaylandSurface::parentXWaylandSurfaceChanged,
-                                 this,
-                                 updateSurfaceWithParentContainer);
-            updateSurfaceWithParentContainer();
-
-            Q_ASSERT(wrapper->parentItem());
-            connect(wrapper, &SurfaceWrapper::requestShowWindowMenu, m_windowMenu, [this, wrapper] (QPoint pos) {
-                QMetaObject::invokeMethod(m_windowMenu, "showWindowMenu", QVariant::fromValue(wrapper), QVariant::fromValue(pos));
-            });
-
-            m_foreignToplevel->addSurface(surface);
-        });
-        surface->safeConnect(&qw_xwayland_surface::notify_dissociate, this, [this, surface] {
-            m_foreignToplevel->removeSurface(surface);
-            m_surfaceContainer->destroyForSurface(surface->surface());
-        });
-    });
-
     m_inputMethodHelper = new WInputMethodHelper(m_server, m_seat);
 
     connect(m_inputMethodHelper, &WInputMethodHelper::inputPopupSurfaceV2Added, this, [this](WInputPopupSurface *inputPopup) {
@@ -368,15 +273,6 @@ void Helper::init()
 
     connect(m_inputMethodHelper, &WInputMethodHelper::inputPopupSurfaceV2Removed, this, [this](WInputPopupSurface *inputPopup) {
         m_surfaceContainer->destroyForSurface(inputPopup->surface());
-    });
-
-    m_xdgDecorationManager = m_server->attach<WXdgDecorationManager>();
-    connect(m_xdgDecorationManager, &WXdgDecorationManager::surfaceModeChanged,
-            this, [this] (WSurface *surface, WXdgDecorationManager::DecorationMode mode) {
-        auto s = m_surfaceContainer->getSurface(surface);
-        if (!s)
-            return;
-        s->setNoDecoration(mode != WXdgDecorationManager::Server);
     });
 
     bool freezeClientWhenDisable = false;
@@ -455,7 +351,6 @@ void Helper::init()
     m_backend->handle()->start();
 
     qInfo() << "Listing on:" << m_socket->fullServerName();
-    startDemoClient();
 }
 
 bool Helper::socketEnabled() const
@@ -489,31 +384,6 @@ void Helper::activeSurface(SurfaceWrapper *wrapper)
     activeSurface(wrapper, Qt::OtherFocusReason);
 }
 
-void Helper::fakePressSurfaceBottomRightToReszie(SurfaceWrapper *surface)
-{
-    auto position = surface->geometry().bottomRight();
-    m_fakelastPressedPosition = position;
-    m_seat->setCursorPosition(position);
-    Q_EMIT surface->requestResize(Qt::BottomEdge | Qt::RightEdge);
-}
-
-bool Helper::startDemoClient()
-{
-#ifdef START_DEMO
-    QProcess waylandClientDemo;
-
-    waylandClientDemo.setProgram(PROJECT_BINARY_DIR"/examples/animationclient/animationclient");
-    waylandClientDemo.setArguments({"-platform", "wayland"});
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert("WAYLAND_DISPLAY", m_socket->fullServerName());
-
-    waylandClientDemo.setProcessEnvironment(env);
-    return waylandClientDemo.startDetached();
-#else
-    return false;
-#endif
-}
-
 bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)
 {
     if (event->type() == QEvent::KeyPress) {
@@ -521,14 +391,6 @@ bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)
         if (QKeySequence(kevent->keyCombination()) == QKeySequence::Quit) {
             qApp->quit();
             return true;
-        } else if (event->modifiers() == Qt::MetaModifier) {
-            if (kevent->key() == Qt::Key_Right) {
-                m_workspace->switchToNext();
-                return true;
-            } else if (kevent->key() == Qt::Key_Left) {
-                m_workspace->switchToPrev();
-                return true;
-            }
         }
     }
 
@@ -551,14 +413,13 @@ bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)
                 return false;
             }
 
-            auto lastPosition = m_fakelastPressedPosition.value_or(cursor->lastPressedOrTouchDownPosition());
+            auto lastPosition = cursor->lastPressedOrTouchDownPosition();
             auto increment_pos = ev->globalPosition() - lastPosition;
             m_surfaceContainer->doMoveResize(increment_pos);
 
             return true;
         } else if (event->type() == QEvent::MouseButtonRelease || event->type() == QEvent::TouchEnd) {
             m_surfaceContainer->endMoveResize();
-            m_fakelastPressedPosition.reset();
         }
     }
 
@@ -643,10 +504,6 @@ void Helper::setActivatedSurface(SurfaceWrapper *newActivateSurface)
 
     if (newActivateSurface) {
         newActivateSurface->stackToLast();
-        if (newActivateSurface->type() == SurfaceWrapper::Type::XWayland) {
-            auto xwaylandSurface = qobject_cast<WXWaylandSurface *>(newActivateSurface->shellSurface());
-            xwaylandSurface->restack(nullptr, WXWaylandSurface::XCB_STACK_MODE_ABOVE);
-        }
     }
 
     if (m_activatedSurface)
@@ -796,19 +653,6 @@ void Helper::setCurrentUserId(int uid)
         return;
     m_currentUserId = uid;
     Q_EMIT currentUserIdChanged();
-}
-
-float Helper::animationSpeed() const
-{
-    return m_animationSpeed;
-}
-
-void Helper::setAnimationSpeed(float newAnimationSpeed)
-{
-    if (qFuzzyCompare(m_animationSpeed, newAnimationSpeed))
-        return;
-    m_animationSpeed = newAnimationSpeed;
-    emit animationSpeedChanged();
 }
 
 Helper::OutputMode Helper::outputMode() const

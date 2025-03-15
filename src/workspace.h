@@ -11,10 +11,6 @@ class Workspace;
 class Workspace : public SurfaceContainer
 {
     Q_OBJECT
-    Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentChanged FINAL)
-    Q_PROPERTY(WorkspaceModel* current READ current WRITE setCurrent NOTIFY currentChanged FINAL)
-    Q_PROPERTY(WorkspaceModel* showOnAllWorkspaceModel READ showOnAllWorkspaceModel CONSTANT)
-    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     QML_ANONYMOUS
 
 public:
@@ -25,22 +21,15 @@ public:
     int containerIndexOfSurface(SurfaceWrapper *surface) const;
 
     Q_INVOKABLE int createContainer(const QString &name, bool visible = false);
-    Q_INVOKABLE void removeContainer(int index);
     WorkspaceModel *container(int index) const;
 
     int count() const;
     int currentIndex() const;
-    WorkspaceModel *showOnAllWorkspaceModel() const;
-    void setCurrentIndex(int newCurrentIndex);
-    Q_INVOKABLE void switchToNext();
-    Q_INVOKABLE void switchToPrev();
-    void switchTo(int index);
 
     WorkspaceModel *current() const;
     void setCurrent(WorkspaceModel *container);
 
 signals:
-    void currentChanged();
     void countChanged();
 
 private:

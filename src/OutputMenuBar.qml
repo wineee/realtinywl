@@ -102,26 +102,6 @@ Item {
                 }
             }
 
-            ToolButton {
-                text: "New Workspace"
-                onClicked: Helper.workspace.createContainer("Workspace"+Math.random());
-            }
-
-            ToolButton {
-                text: "Delete Workspace"
-                onClicked: Helper.workspace.removeContainer(Helper.workspace.currentIndex);
-            }
-
-            ToolButton {
-                text: "Prev Workspace"
-                onClicked: Helper.workspace.switchToPrev();
-            }
-
-            ToolButton {
-                text: "Next Workspace"
-                onClicked: Helper.workspace.switchToNext();
-            }
-
             Label {
                 text: Helper.workspace.currentIndex
                 color: "red"

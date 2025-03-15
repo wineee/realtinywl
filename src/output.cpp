@@ -60,9 +60,6 @@ Output *Output::createPrimary(WOutput *output, QQmlEngine *engine, QObject *pare
     auto contentItem = Helper::instance()->window()->contentItem();
     outputItem->setParentItem(contentItem);
 
-    o->m_taskBar = Helper::instance()->qmlEngine()->createTaskBar(o, contentItem);
-    o->m_taskBar->setZ(RootSurfaceContainer::TaskBarZOrder);
-
     o->m_menuBar = Helper::instance()->qmlEngine()->createMenuBar(outputItem, contentItem);
     o->m_menuBar->setZ(RootSurfaceContainer::MenuBarZOrder);
     o->setExclusiveZone(Qt::TopEdge, o->m_menuBar, o->m_menuBar->height());

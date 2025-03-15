@@ -9,7 +9,6 @@ import Tinywl
 OutputItem {
     id: rootOutputItem
     readonly property OutputViewport screenViewport: outputViewport
-    property alias wallpaperVisible: wallpaper.visible
     property bool forceSoftwareCursor: false
 
     devicePixelRatio: output?.scale ?? devicePixelRatio
@@ -77,14 +76,6 @@ OutputItem {
             rotationAnimator.from = rotation
             rotationAnimator.start()
         }
-    }
-
-    Wallpaper {
-        id: wallpaper
-        userId: Helper.currentUserId
-        output: rootOutputItem.output
-        workspace: Helper.workspace.current
-        anchors.fill: parent
     }
 
     Text {

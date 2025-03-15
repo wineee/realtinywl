@@ -39,14 +39,8 @@ class SurfaceWrapper : public QQuickItem
     Q_PROPERTY(bool positionAutomatic READ positionAutomatic WRITE setPositionAutomatic NOTIFY positionAutomaticChanged FINAL)
     Q_PROPERTY(State previousSurfaceState READ previousSurfaceState NOTIFY previousSurfaceStateChanged FINAL)
     Q_PROPERTY(State surfaceState READ surfaceState NOTIFY surfaceStateChanged BINDABLE bindableSurfaceState FINAL)
-    Q_PROPERTY(qreal radius READ radius WRITE setRadius NOTIFY radiusChanged FINAL)
     Q_PROPERTY(SurfaceContainer* container READ container NOTIFY containerChanged FINAL)
-    Q_PROPERTY(QQuickItem* titleBar READ titleBar NOTIFY noTitleBarChanged FINAL)
-    Q_PROPERTY(QQuickItem* decoration READ decoration NOTIFY noDecorationChanged FINAL)
-    Q_PROPERTY(bool visibleDecoration READ visibleDecoration NOTIFY visibleDecorationChanged FINAL)
     Q_PROPERTY(bool clipInOutput READ clipInOutput WRITE setClipInOutput NOTIFY clipInOutputChanged FINAL)
-    Q_PROPERTY(bool noTitleBar READ noTitleBar RESET resetNoTitleBar NOTIFY noTitleBarChanged FINAL)
-    Q_PROPERTY(bool noCornerRadius READ noCornerRadius NOTIFY noCornerRadiusChanged FINAL)
     Q_PROPERTY(int workspaceId READ workspaceId NOTIFY workspaceIdChanged FINAL)
     Q_PROPERTY(bool alwaysOnTop READ alwaysOnTop WRITE setAlwaysOnTop NOTIFY alwaysOnTopChanged FINAL)
     Q_PROPERTY(bool showOnAllWorkspace READ showOnAllWorkspace NOTIFY showOnAllWorkspaceChanged FINAL)
@@ -55,7 +49,6 @@ public:
     enum class Type {
         XdgToplevel,
         XdgPopup,
-        XWayland,
         Layer,
         InputPopup,
     };
@@ -121,7 +114,6 @@ public:
     bool isTiling() const;
     bool isAnimationRunning() const;
 
-    qreal radius() const;
     void setRadius(qreal newRadius);
 
     SurfaceContainer *container() const;
@@ -159,8 +151,6 @@ public:
     bool showOnAllWorkspace() const;
     void setShowOnAllWorkspace(bool showOnAllWorkspace);
 
-    void setXwaylandPositionFromSurface(bool value);
-
 public Q_SLOTS:
     // for titlebar
     void requestMinimize();
@@ -196,9 +186,6 @@ Q_SIGNALS:
     void containerChanged();
     void visibleDecorationChanged();
     void clipInOutputChanged();
-    void noDecorationChanged();
-    void noTitleBarChanged();
-    void noCornerRadiusChanged();
     void workspaceIdChanged();
     void alwaysOnTopChanged();
     void showOnAllWorkspaceChanged();
@@ -210,11 +197,8 @@ private:
     void setParent(QQuickItem *item);
     void setActivate(bool activate);
     void setNormalGeometry(const QRectF &newNormalGeometry);
-    void setNoDecoration(bool newNoDecoration);
-    void updateTitleBar();
     void setBoundedRect(const QRectF &newBoundedRect);
     void setContainer(SurfaceContainer *newContainer);
-    void setVisibleDecoration(bool newVisibleDecoration);
     void updateBoundingRect();
     void updateVisible();
     void updateSubSurfaceStacking();
@@ -223,8 +207,6 @@ private:
     void itemChange(ItemChange change, const ItemChangeData &data) override;
 
     void doSetSurfaceState(State newSurfaceState);
-    Q_SLOT void onAnimationReady();
-    Q_SLOT void onAnimationFinished();
     bool startStateChangeAnimation(SurfaceWrapper::State targetState, const QRectF &targetGeometry);
     void updateExplicitAlwaysOnTop();
 
@@ -250,7 +232,6 @@ private:
     QRectF m_pendingGeometry;
     Q_OBJECT_BINDABLE_PROPERTY_WITH_ARGS(SurfaceWrapper, SurfaceWrapper::State, m_previousSurfaceState, State::Normal, &SurfaceWrapper::previousSurfaceStateChanged)
     Q_OBJECT_BINDABLE_PROPERTY_WITH_ARGS(SurfaceWrapper, SurfaceWrapper::State, m_surfaceState, State::Normal, &SurfaceWrapper::surfaceStateChanged)
-    qreal m_radius = 18.0;
     int m_workspaceId = -1;
     int m_explicitAlwaysOnTop = 0;
 
@@ -261,11 +242,6 @@ private:
     };
 
     uint m_positionAutomatic:1;
-    uint m_visibleDecoration:1;
     uint m_clipInOutput:1;
-    uint m_noDecoration:1;
-    uint m_titleBarState:2;
-    uint m_noCornerRadius:1;
     uint m_alwaysOnTop:1;
-    uint m_xwaylandPositionFromSurface:1;
 };
