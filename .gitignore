@@ -1,6 +1,8 @@
 .vscode/
 .cache/
 build/
+test/flake.lock
+*.qcow2
 
 *.user
 
