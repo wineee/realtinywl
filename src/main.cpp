@@ -18,14 +18,14 @@ int main(int argc, char *argv[]) {
     Q_ASSERT(qw_buffer::get_objects().isEmpty());
 
     WServer::initializeQPA();
-    //    QQuickStyle::setStyle("Material");
+    //QQuickStyle::setStyle("Material");
 
     QPointer<Helper> helper;
     int quitCode = 0;
     {
         QGuiApplication::setAttribute(Qt::AA_UseOpenGLES);
         QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
-        QGuiApplication::setQuitOnLastWindowClosed(false);
+        // QGuiApplication::setQuitOnLastWindowClosed(false);
         QGuiApplication app(argc, argv);
 
         QmlEngine qmlEngine;

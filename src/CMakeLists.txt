@@ -37,14 +37,14 @@ qt_add_qml_module(${TARGET}
     SOURCES layersurfacecontainer.h layersurfacecontainer.cpp
     SOURCES rootsurfacecontainer.h rootsurfacecontainer.cpp
     SOURCES workspacemodel.h workspacemodel.cpp
+    SOURCES backends/LoginManager.hpp  backends/LoginManager.cpp
+    SOURCES backends/greetd/GreetdManager.hpp backends/greetd/GreetdManager.cpp
 
     QML_FILES PrimaryOutput.qml
     QML_FILES CopyOutput.qml
     QML_FILES SurfaceContent.qml
     QML_FILES OutputMenuBar.qml
-
-    RESOURCES
-    "res/xx.jpg"
+    QML_FILES Greeter.qml
 )
 
 target_compile_definitions(${TARGET}
