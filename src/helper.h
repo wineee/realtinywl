@@ -5,6 +5,7 @@
 
 #include "qmlengine.h"
 #include "workspace.h"
+#include "GreetdManager.hpp"
 
 #include <wglobal.h>
 #include <wqmlcreator.h>
@@ -31,12 +32,10 @@ class WOutputViewport;
 class WOutputLayer;
 class WOutput;
 class WInputMethodHelper;
-class WXdgDecorationManager;
 class WSocket;
 class WSurface;
 class WToplevelSurface;
 class WSurfaceItem;
-class WForeignToplevel;
 WAYLIB_SERVER_END_NAMESPACE
 
 QW_BEGIN_NAMESPACE
@@ -135,6 +134,9 @@ private:
     bool unacceptedEvent(WSeat *, QWindow *, QInputEvent *event) override;
 
     static Helper *m_instance;
+
+    // Greeter Backends
+    GreetdLogin *m_greetd = nullptr;
 
     // qtquick helper
     WOutputRenderWindow *m_renderWindow = nullptr;

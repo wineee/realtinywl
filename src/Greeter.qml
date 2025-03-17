@@ -58,7 +58,7 @@ Item {
                     onAccepted: {
                         if (text) {
                             enabled = false;
-                            // Backend.login(text);
+                            Greetd.authenticate("testuser", passwordField.text);
                         }
                     }
 

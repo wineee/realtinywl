@@ -73,6 +73,7 @@
 Helper *Helper::m_instance = nullptr;
 Helper::Helper(QObject *parent)
     : WSeatEventFilter(parent)
+    , m_greetd(new GreetdLogin)
     , m_renderWindow(new WOutputRenderWindow(this))
     , m_server(new WServer(this))
     , m_surfaceContainer(new RootSurfaceContainer(m_renderWindow->contentItem()))
@@ -139,6 +140,7 @@ void Helper::init()
     engine->setContextForObject(m_renderWindow, engine->rootContext());
     engine->setContextForObject(m_renderWindow->contentItem(), engine->rootContext());
     m_surfaceContainer->setQmlEngine(engine);
+    engine->rootContext()->setContextProperty("Greetd", m_greetd);
 
     m_surfaceContainer->init(m_server);
     m_seat = m_server->attach<WSeat>();
