@@ -11,14 +11,12 @@
 #include <woutputrenderwindow.h>
 #include <wxdgsurface.h>
 #include <wxdgpopupsurface.h>
-#include <wlayersurface.h>
 #include <winputpopupsurface.h>
 #include <woutputlayout.h>
 #include <wquicktextureproxy.h>
 #include <wxdgpopupsurfaceitem.h>
 
 #include <qwoutputlayout.h>
-#include <qwlayershellv1.h>
 
 #include <QQmlEngine>
 
@@ -62,7 +60,6 @@ Output *Output::createPrimary(WOutput *output, QQmlEngine *engine, QObject *pare
 
     o->m_menuBar = Helper::instance()->qmlEngine()->createMenuBar(outputItem, contentItem);
     o->m_menuBar->setZ(RootSurfaceContainer::MenuBarZOrder);
-    o->setExclusiveZone(Qt::TopEdge, o->m_menuBar, o->m_menuBar->height());
 
     return o;
 }
@@ -129,26 +126,20 @@ void Output::addSurface(SurfaceWrapper *surface)
     Q_ASSERT(!hasSurface(surface));
     SurfaceListModel::addSurface(surface);
 
-    if (surface->type() == SurfaceWrapper::Type::Layer) {
-        auto layer = qobject_cast<WLayerSurface*>(surface->shellSurface());
-        layer->safeConnect(&WLayerSurface::layerPropertiesChanged, this, &Output::layoutLayerSurfaces);
 
-        layoutLayerSurfaces();
-    } else {
-        auto layoutSurface = [surface, this] {
-            layoutNonLayerSurface(surface, {});
-        };
+    auto layoutSurface = [surface, this] {
+        layoutNonLayerSurface(surface, {});
+    };
 
-        connect(surface, &SurfaceWrapper::widthChanged, this, layoutSurface);
-        connect(surface, &SurfaceWrapper::heightChanged, this, layoutSurface);
-        layoutSurface();
-        if (surface->type() == SurfaceWrapper::Type::XdgPopup) {
-            auto xdgPopupSurfaceItem = qobject_cast<WXdgPopupSurfaceItem *>(surface->surfaceItem());
-            connect(xdgPopupSurfaceItem, &WXdgPopupSurfaceItem::implicitPositionChanged, this, [surface, this] {
-                // Reposition should ignore positionAutomatic
-                layoutPopupSurface(surface);
-            });
-        }
+    connect(surface, &SurfaceWrapper::widthChanged, this, layoutSurface);
+    connect(surface, &SurfaceWrapper::heightChanged, this, layoutSurface);
+    layoutSurface();
+    if (surface->type() == SurfaceWrapper::Type::XdgPopup) {
+        auto xdgPopupSurfaceItem = qobject_cast<WXdgPopupSurfaceItem *>(surface->surfaceItem());
+        connect(xdgPopupSurfaceItem, &WXdgPopupSurfaceItem::implicitPositionChanged, this, [surface, this] {
+            // Reposition should ignore positionAutomatic
+            layoutPopupSurface(surface);
+        });
     }
 }
 
@@ -157,14 +148,6 @@ void Output::removeSurface(SurfaceWrapper *surface)
     Q_ASSERT(hasSurface(surface));
     SurfaceListModel::removeSurface(surface);
     surface->disconnect(this);
-
-    if (surface->type() == SurfaceWrapper::Type::Layer) {
-        if (auto ss = surface->shellSurface()) {
-            ss->safeDisconnect(this);
-            removeExclusiveZone(ss);
-        }
-        layoutLayerSurfaces();
-    }
 }
 
 WOutput *Output::output() const
@@ -179,161 +162,11 @@ WOutputItem *Output::outputItem() const
     return m_item;
 }
 
-void Output::setExclusiveZone(Qt::Edge edge, QObject *object, int value)
-{
-    Q_ASSERT(value > 0);
-    removeExclusiveZone(object);
-    switch (edge) {
-    case Qt::TopEdge:
-        m_topExclusiveZones.append(std::make_pair(object, value));
-        m_exclusiveZone.setTop(m_exclusiveZone.top() + value);
-        break;
-    case Qt::BottomEdge:
-        m_bottomExclusiveZones.append(std::make_pair(object, value));
-        m_exclusiveZone.setBottom(m_exclusiveZone.bottom() + value);
-        break;
-    case Qt::LeftEdge:
-        m_leftExclusiveZones.append(std::make_pair(object, value));
-        m_exclusiveZone.setLeft(m_exclusiveZone.left() + value);
-        break;
-    case Qt::RightEdge:
-        m_rightExclusiveZones.append(std::make_pair(object, value));
-        m_exclusiveZone.setRight(m_exclusiveZone.right() + value);
-        break;
-    default:
-        Q_UNREACHABLE_RETURN();
-    }
-}
-
-bool Output::removeExclusiveZone(QObject *object)
-{
-    auto finder = [object](const auto &pair) { return pair.first == object; };
-    auto tmp = std::find_if(m_topExclusiveZones.begin(), m_topExclusiveZones.end(), finder);
-    if (tmp != m_topExclusiveZones.end()) {
-        m_topExclusiveZones.erase(tmp);
-        m_exclusiveZone.setTop(m_exclusiveZone.top() - tmp->second);
-        Q_ASSERT(m_exclusiveZone.top() >= 0);
-        return true;
-    }
-
-    tmp = std::find_if(m_bottomExclusiveZones.begin(), m_bottomExclusiveZones.end(), finder);
-    if (tmp != m_bottomExclusiveZones.end()) {
-        m_bottomExclusiveZones.erase(tmp);
-        m_exclusiveZone.setBottom(m_exclusiveZone.bottom() - tmp->second);
-        Q_ASSERT(m_exclusiveZone.bottom() >= 0);
-        return true;
-    }
-
-    tmp = std::find_if(m_leftExclusiveZones.begin(), m_leftExclusiveZones.end(), finder);
-    if (tmp != m_leftExclusiveZones.end()) {
-        m_leftExclusiveZones.erase(tmp);
-        m_exclusiveZone.setLeft(m_exclusiveZone.left() - tmp->second);
-        Q_ASSERT(m_exclusiveZone.left() >= 0);
-        return true;
-    }
-
-    tmp = std::find_if(m_rightExclusiveZones.begin(), m_rightExclusiveZones.end(), finder);
-    if (tmp != m_rightExclusiveZones.end()) {
-        m_rightExclusiveZones.erase(tmp);
-        m_exclusiveZone.setRight(m_exclusiveZone.right() - tmp->second);
-        Q_ASSERT(m_exclusiveZone.right() >= 0);
-        return true;
-    }
-
-    return false;
-}
-
-void Output::layoutLayerSurface(SurfaceWrapper *surface)
-{
-    WLayerSurface* layer = qobject_cast<WLayerSurface*>(surface->shellSurface());
-    Q_ASSERT(layer);
-    if (!layer->handle()->handle()->initialized) {
-        return;
-    }
-
-    auto validGeo = layer->exclusiveZone() == -1 ? this->rect() : validRect();
-    validGeo = validGeo.marginsRemoved(QMargins(layer->leftMargin(),
-                                                layer->topMargin(),
-                                                layer->rightMargin(),
-                                                layer->bottomMargin()));
-    auto anchor = layer->ancher();
-    QRectF surfaceGeo(QPointF(0, 0), layer->desiredSize());
-
-    if (anchor.testFlags(WLayerSurface::AnchorType::Left | WLayerSurface::AnchorType::Right)) {
-        surfaceGeo.moveLeft(validGeo.left());
-        surfaceGeo.setWidth(validGeo.width());
-    } else if (anchor & WLayerSurface::AnchorType::Left) {
-        surfaceGeo.moveLeft(validGeo.left());
-    } else if (anchor & WLayerSurface::AnchorType::Right) {
-        surfaceGeo.moveRight(validGeo.right());
-    } else {
-        surfaceGeo.moveLeft(validGeo.left() + (validGeo.width() - surfaceGeo.width()) / 2);
-    }
-
-    if (anchor.testFlags(WLayerSurface::AnchorType::Top | WLayerSurface::AnchorType::Bottom)) {
-        surfaceGeo.moveTop(validGeo.top());
-        surfaceGeo.setHeight(validGeo.height());
-    } else if (anchor & WLayerSurface::AnchorType::Top) {
-        surfaceGeo.moveTop(validGeo.top());
-    } else if (anchor & WLayerSurface::AnchorType::Bottom) {
-        surfaceGeo.moveBottom(validGeo.bottom());
-    } else {
-        surfaceGeo.moveTop(validGeo.top() + (validGeo.height() - surfaceGeo.height()) / 2);
-    }
-
-    if (layer->exclusiveZone() > 0) {
-        // TODO:: support `set_exclusive_edge` in layer-shell v5, need wlroots 0.19
-        switch (layer->getExclusiveZoneEdge()) {
-            using enum WLayerSurface::AnchorType;
-        case Top:
-            setExclusiveZone(Qt::TopEdge, layer, layer->exclusiveZone());
-            break;
-        case Bottom:
-            setExclusiveZone(Qt::BottomEdge, layer, layer->exclusiveZone());
-            break;
-        case Left:
-            setExclusiveZone(Qt::LeftEdge, layer, layer->exclusiveZone());
-            break;
-        case Right:
-            setExclusiveZone(Qt::RightEdge, layer, layer->exclusiveZone());
-            break;
-        default:
-            qCWarning(qLcLayerShell) << layer->appId() << " has set exclusive zone, but exclusive edge is invalid!";
-            break;
-        }
-    }
-
-    surface->setSize(surfaceGeo.size());
-    surface->setPosition(surfaceGeo.topLeft());
-}
-
-void Output::layoutLayerSurfaces()
-{
-    auto oldExclusiveZone = m_exclusiveZone;
-
-    for (auto *s : surfaces()) {
-        if (s->type() != SurfaceWrapper::Type::Layer)
-            continue;
-        removeExclusiveZone(s->shellSurface());
-    }
-
-    for (auto *s : surfaces()) {
-        if (s->type() != SurfaceWrapper::Type::Layer)
-            continue;
-        layoutLayerSurface(s);
-    }
-
-    if (oldExclusiveZone != m_exclusiveZone) {
-        layoutNonLayerSurfaces();
-        emit exclusiveZoneChanged();
-    }
-}
-
 void Output::layoutNonLayerSurface(SurfaceWrapper *surface, const QSizeF &sizeDiff)
 {
     Q_ASSERT(surface->type() != SurfaceWrapper::Type::Layer);
     surface->setFullscreenGeometry(geometry());
-    const auto validGeo = this->validGeometry();
+    const auto validGeo = this->geometry();
     surface->setMaximizedGeometry(validGeo);
 
     QRectF normalGeo = surface->normalGeometry();
@@ -417,22 +250,19 @@ void Output::layoutPopupSurface(SurfaceWrapper *surface)
 
 void Output::layoutNonLayerSurfaces()
 {
-    const auto currentSize = validRect().size();
+    const auto currentSize = geometry().size();
     const auto sizeDiff = m_lastSizeOnLayoutNonLayerSurfaces.isValid()
                               ? currentSize - m_lastSizeOnLayoutNonLayerSurfaces
                               : QSizeF(0, 0);
     m_lastSizeOnLayoutNonLayerSurfaces = currentSize;
 
     for (SurfaceWrapper *surface : surfaces()) {
-        if (surface->type() == SurfaceWrapper::Type::Layer)
-            continue;
         layoutNonLayerSurface(surface, sizeDiff);
     }
 }
 
 void Output::layoutAllSurfaces()
 {
-    layoutLayerSurfaces();
     layoutNonLayerSurfaces();
 }
 
@@ -474,11 +304,6 @@ void Output::updatePrimaryOutputHardwareLayers()
     m_hardwareLayersOfPrimaryOutput = layers;
 }
 
-QMargins Output::exclusiveZone() const
-{
-    return m_exclusiveZone;
-}
-
 QRectF Output::rect() const
 {
     return QRectF(QPointF(0, 0), m_item->size());
@@ -489,17 +314,7 @@ QRectF Output::geometry() const
     return QRectF(m_item->position(), m_item->size());
 }
 
-QRectF Output::validRect() const
-{
-    return rect().marginsRemoved(m_exclusiveZone);
-}
-
 WOutputViewport *Output::screenViewport() const
 {
     return m_outputViewport;
-}
-
-QRectF Output::validGeometry() const
-{
-    return geometry().marginsRemoved(m_exclusiveZone);
 }

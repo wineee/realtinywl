@@ -19,9 +19,5 @@ Item {
         anchors.fill: parent
         live: root.surface && !(root.surface.flags & SurfaceItem.NonLive)
         smooth: root.surface?.smooth ?? true
-
-        onDevicePixelRatioChanged: {
-            wrapper.updateSurfaceSizeRatio()
-        }
     }
 }

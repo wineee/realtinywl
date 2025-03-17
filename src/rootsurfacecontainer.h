@@ -37,11 +37,7 @@ public:
     explicit RootSurfaceContainer(QQuickItem *parent);
 
     enum ContainerZOrder {
-        BackgroundZOrder = -2,
-        BottomZOrder = -1,
         NormalZOrder = 0,
-        TopZOrder = 1,
-        OverlayZOrder = 2,
         TaskBarZOrder = 3,
         MenuBarZOrder = 3,
         PopupZOrder = 4,

@@ -257,8 +257,7 @@ void RootSurfaceContainer::addBySubContainer(SurfaceContainer *sub, SurfaceWrapp
         startResize(surface, edges);
     });
     connect(surface, &SurfaceWrapper::surfaceStateChanged, this, [surface, this] {
-        if (surface->surfaceState() == SurfaceWrapper::State::Minimized
-            || surface->surfaceState() == SurfaceWrapper::State::Tiling)
+        if (surface->surfaceState() == SurfaceWrapper::State::Minimized)
             return;
         Helper::instance()->activeSurface(surface);
     });
@@ -444,7 +443,7 @@ void RootSurfaceContainer::ensureSurfaceNormalPositionValid(SurfaceWrapper *surf
     QList<QRectF> outputRects;
     outputRects.reserve(outputs().size());
     for (auto o : outputs())
-        outputRects << o->validGeometry();
+        outputRects << o->geometry();
 
     // Ensure window is not outside the screen
     const QPointF mustVisiblePosOfSurface(qMin(normalGeo.right(), normalGeo.x() + 20),

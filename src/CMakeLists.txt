@@ -30,13 +30,10 @@ qt_add_qml_module(${TARGET}
 
     SOURCES helper.h helper.cpp
     SOURCES surfacewrapper.h surfacewrapper.cpp
-    SOURCES workspace.h workspace.cpp
     SOURCES output.h output.cpp
     SOURCES qmlengine.h qmlengine.cpp
     SOURCES surfacecontainer.h surfacecontainer.cpp
-    SOURCES layersurfacecontainer.h layersurfacecontainer.cpp
     SOURCES rootsurfacecontainer.h rootsurfacecontainer.cpp
-    SOURCES workspacemodel.h workspacemodel.cpp
     SOURCES GreetdManager.hpp GreetdManager.cpp
 
     QML_FILES PrimaryOutput.qml

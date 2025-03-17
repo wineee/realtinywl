@@ -33,17 +33,12 @@ class SurfaceWrapper : public QQuickItem
     Q_PROPERTY(QRectF geometry READ geometry NOTIFY geometryChanged FINAL)
     Q_PROPERTY(QRectF normalGeometry READ normalGeometry NOTIFY normalGeometryChanged FINAL)
     Q_PROPERTY(QRectF maximizedGeometry READ maximizedGeometry NOTIFY maximizedGeometryChanged FINAL)
-    Q_PROPERTY(QRectF fullscreenGeometry READ fullscreenGeometry NOTIFY fullscreenGeometryChanged FINAL)
-    Q_PROPERTY(QRectF tilingGeometry READ tilingGeometry NOTIFY tilingGeometryChanged FINAL)
     Q_PROPERTY(Output* ownsOutput READ ownsOutput NOTIFY ownsOutputChanged FINAL)
     Q_PROPERTY(bool positionAutomatic READ positionAutomatic WRITE setPositionAutomatic NOTIFY positionAutomaticChanged FINAL)
     Q_PROPERTY(State previousSurfaceState READ previousSurfaceState NOTIFY previousSurfaceStateChanged FINAL)
     Q_PROPERTY(State surfaceState READ surfaceState NOTIFY surfaceStateChanged BINDABLE bindableSurfaceState FINAL)
     Q_PROPERTY(SurfaceContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(bool clipInOutput READ clipInOutput WRITE setClipInOutput NOTIFY clipInOutputChanged FINAL)
-    Q_PROPERTY(int workspaceId READ workspaceId NOTIFY workspaceIdChanged FINAL)
-    Q_PROPERTY(bool alwaysOnTop READ alwaysOnTop WRITE setAlwaysOnTop NOTIFY alwaysOnTopChanged FINAL)
-    Q_PROPERTY(bool showOnAllWorkspace READ showOnAllWorkspace NOTIFY showOnAllWorkspaceChanged FINAL)
 
 public:
     enum class Type {
@@ -59,7 +54,6 @@ public:
         Maximized,
         Minimized,
         Fullscreen,
-        Tiling,
     };
     Q_ENUM(State)
 
@@ -95,9 +89,6 @@ public:
     QRectF fullscreenGeometry() const;
     void setFullscreenGeometry(const QRectF &newFullscreenGeometry);
 
-    QRectF tilingGeometry() const;
-    void setTilingGeometry(const QRectF &newTilingGeometry);
-
     bool positionAutomatic() const;
     void setPositionAutomatic(bool newPositionAutomatic);
 
@@ -111,7 +102,6 @@ public:
     bool isNormal() const;
     bool isMaximized() const;
     bool isMinimized() const;
-    bool isTiling() const;
     bool isAnimationRunning() const;
 
     void setRadius(qreal newRadius);
@@ -125,31 +115,9 @@ public:
     SurfaceWrapper *stackLastSurface() const;
     bool hasChild(SurfaceWrapper *child) const;
 
-    QQuickItem *titleBar() const;
-    QQuickItem *decoration() const;
-
-    bool noDecoration() const;
-    bool visibleDecoration() const;
-
     bool clipInOutput() const;
     void setClipInOutput(bool newClipInOutput);
     QRectF clipRect() const override;
-
-    bool noTitleBar() const;
-    void setNoTitleBar(bool newNoTitleBar);
-    void resetNoTitleBar();
-
-    bool noCornerRadius() const;
-    void setNoCornerRadius(bool newNoCornerRadius);
-
-    int workspaceId() const;
-    void setWorkspaceId(int newWorkspaceId);
-
-    bool alwaysOnTop() const;
-    void setAlwaysOnTop(bool alwaysOnTop);
-
-    bool showOnAllWorkspace() const;
-    void setShowOnAllWorkspace(bool showOnAllWorkspace);
 
 public Q_SLOTS:
     // for titlebar
@@ -166,29 +134,19 @@ public Q_SLOTS:
     bool stackAfter(QQuickItem *item);
     void stackToLast();
 
-    void updateSurfaceSizeRatio();
-
 Q_SIGNALS:
     void boundingRectChanged();
     void ownsOutputChanged();
     void normalGeometryChanged();
     void maximizedGeometryChanged();
-    void fullscreenGeometryChanged();
-    void tilingGeometryChanged();
     void positionAutomaticChanged();
     void previousSurfaceStateChanged();
     void surfaceStateChanged();
-    void radiusChanged();
     void requestMove(); // for titlebar
     void requestResize(Qt::Edges edges);
-    void requestShowWindowMenu(QPoint pos);
     void geometryChanged();
     void containerChanged();
-    void visibleDecorationChanged();
     void clipInOutputChanged();
-    void workspaceIdChanged();
-    void alwaysOnTopChanged();
-    void showOnAllWorkspaceChanged();
 
 private:
     using QQuickItem::setParentItem;
@@ -204,11 +162,9 @@ private:
     void updateSubSurfaceStacking();
     void updateClipRect();
     void geometryChange(const QRectF &newGeo, const QRectF &oldGeometry) override;
-    void itemChange(ItemChange change, const ItemChangeData &data) override;
 
     void doSetSurfaceState(State newSurfaceState);
     bool startStateChangeAnimation(SurfaceWrapper::State targetState, const QRectF &targetGeometry);
-    void updateExplicitAlwaysOnTop();
 
     QmlEngine *m_engine;
     QPointer<SurfaceContainer> m_container;
@@ -224,7 +180,6 @@ private:
     QRectF m_normalGeometry;
     QRectF m_maximizedGeometry;
     QRectF m_fullscreenGeometry;
-    QRectF m_tilingGeometry;
     Type m_type;
     QPointer<Output> m_ownsOutput;
     QPointF m_positionInOwnsOutput;
@@ -232,8 +187,6 @@ private:
     QRectF m_pendingGeometry;
     Q_OBJECT_BINDABLE_PROPERTY_WITH_ARGS(SurfaceWrapper, SurfaceWrapper::State, m_previousSurfaceState, State::Normal, &SurfaceWrapper::previousSurfaceStateChanged)
     Q_OBJECT_BINDABLE_PROPERTY_WITH_ARGS(SurfaceWrapper, SurfaceWrapper::State, m_surfaceState, State::Normal, &SurfaceWrapper::surfaceStateChanged)
-    int m_workspaceId = -1;
-    int m_explicitAlwaysOnTop = 0;
 
     struct TitleBarState {
         constexpr static uint Default = 0;
@@ -243,5 +196,4 @@ private:
 
     uint m_positionAutomatic:1;
     uint m_clipInOutput:1;
-    uint m_alwaysOnTop:1;
 };

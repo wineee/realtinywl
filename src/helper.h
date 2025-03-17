@@ -4,8 +4,8 @@
 #pragma once
 
 #include "qmlengine.h"
-#include "workspace.h"
 #include "GreetdManager.hpp"
+#include "surfacecontainer.h"
 
 #include <wglobal.h>
 #include <wqmlcreator.h>
@@ -49,7 +49,6 @@ QW_USE_NAMESPACE
 
 class Output;
 class SurfaceWrapper;
-class Workspace;
 class RootSurfaceContainer;
 class LayerSurfaceContainer;
 class Helper : public WSeatEventFilter
@@ -59,7 +58,6 @@ class Helper : public WSeatEventFilter
     Q_PROPERTY(bool socketEnabled READ socketEnabled WRITE setSocketEnabled NOTIFY socketEnabledChanged FINAL)
     Q_PROPERTY(SurfaceWrapper* activatedSurface READ activatedSurface NOTIFY activatedSurfaceChanged FINAL)
     Q_PROPERTY(RootSurfaceContainer* rootContainer READ rootContainer CONSTANT FINAL)
-    Q_PROPERTY(Workspace* workspace READ workspace CONSTANT FINAL)
     Q_PROPERTY(int currentUserId READ currentUserId WRITE setCurrentUserId NOTIFY currentUserIdChanged FINAL)
     Q_PROPERTY(OutputMode outputMode READ outputMode WRITE setOutputMode NOTIFY outputModeChanged FINAL)
     QML_ELEMENT
@@ -79,7 +77,6 @@ public:
 
     QmlEngine *qmlEngine() const;
     WOutputRenderWindow *window() const;
-    Workspace* workspace() const;
     Output* output() const;
     void init();
 
@@ -120,8 +117,6 @@ private:
 
     void setOutputProxy(Output *output);
 
-    void updateLayerSurfaceContainer(SurfaceWrapper *surface);
-
     SurfaceWrapper *keyboardFocusSurface() const;
     void setKeyboardFocusSurface(SurfaceWrapper *newActivateSurface, Qt::FocusReason reason);
     SurfaceWrapper *activatedSurface() const;
@@ -160,11 +155,6 @@ private:
     QPointer<SurfaceWrapper> m_activatedSurface;
 
     RootSurfaceContainer *m_surfaceContainer = nullptr;
-    LayerSurfaceContainer *m_backgroundContainer = nullptr;
-    LayerSurfaceContainer *m_bottomContainer = nullptr;
-    Workspace *m_workspace = nullptr;
-    LayerSurfaceContainer *m_topContainer = nullptr;
-    LayerSurfaceContainer *m_overlayContainer = nullptr;
     SurfaceContainer *m_popupContainer = nullptr;
     int m_currentUserId = -1;
     OutputMode m_mode = OutputMode::Extension;

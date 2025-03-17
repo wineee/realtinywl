@@ -4,11 +4,9 @@
 #include "helper.h"
 #include "surfacewrapper.h"
 #include "output.h"
-#include "workspace.h"
 #include "qmlengine.h"
 #include "surfacecontainer.h"
 #include "rootsurfacecontainer.h"
-#include "layersurfacecontainer.h"
 
 #include <WServer>
 #include <WOutput>
@@ -20,7 +18,6 @@
 #include <wrenderhelper.h>
 #include <WBackend>
 #include <wxdgshell.h>
-#include <wlayershell.h>
 #include <woutputitem.h>
 #include <wquickcursor.h>
 #include <woutputrenderwindow.h>
@@ -36,7 +33,6 @@
 #include <wseat.h>
 #include <wsocket.h>
 #include <wtoplevelsurface.h>
-#include <wlayersurface.h>
 #include <wxdgdecorationmanager.h>
 
 #include <qwbackend.h>
@@ -47,7 +43,6 @@
 #include <qwrenderer.h>
 #include <qwcompositor.h>
 #include <qwsubcompositor.h>
-#include <qwlayershellv1.h>
 #include <qwscreencopyv1.h>
 #include <qwfractionalscalemanagerv1.h>
 #include <qwgammacontorlv1.h>
@@ -77,11 +72,6 @@ Helper::Helper(QObject *parent)
     , m_renderWindow(new WOutputRenderWindow(this))
     , m_server(new WServer(this))
     , m_surfaceContainer(new RootSurfaceContainer(m_renderWindow->contentItem()))
-    , m_backgroundContainer(new LayerSurfaceContainer(m_surfaceContainer))
-    , m_bottomContainer(new LayerSurfaceContainer(m_surfaceContainer))
-    , m_workspace(new Workspace(m_surfaceContainer))
-    , m_topContainer(new LayerSurfaceContainer(m_surfaceContainer))
-    , m_overlayContainer(new LayerSurfaceContainer(m_surfaceContainer))
     , m_popupContainer(new SurfaceContainer(m_surfaceContainer))
 {
     setCurrentUserId(getuid());
@@ -94,11 +84,6 @@ Helper::Helper(QObject *parent)
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
     m_surfaceContainer->setFocusPolicy(Qt::StrongFocus);
 #endif
-    m_backgroundContainer->setZ(RootSurfaceContainer::BackgroundZOrder);
-    m_bottomContainer->setZ(RootSurfaceContainer::BottomZOrder);
-    m_workspace->setZ(RootSurfaceContainer::NormalZOrder);
-    m_topContainer->setZ(RootSurfaceContainer::TopZOrder);
-    m_overlayContainer->setZ(RootSurfaceContainer::OverlayZOrder);
     m_popupContainer->setZ(RootSurfaceContainer::PopupZOrder);
 }
 
@@ -127,11 +112,6 @@ QmlEngine *Helper::qmlEngine() const
 WOutputRenderWindow *Helper::window() const
 {
     return m_renderWindow;
-}
-
-Workspace* Helper::workspace() const
-{
-    return m_workspace;
 }
 
 void Helper::init()
@@ -184,7 +164,6 @@ void Helper::init()
     });
 
     auto *xdgShell = m_server->attach<WXdgShell>(5);
-    auto *layerShell = m_server->attach<WLayerShell>(xdgShell);
     auto *xdgOutputManager = m_server->attach<WXdgOutputManager>(m_surfaceContainer->outputLayout());
 
     connect(xdgShell, &WXdgShell::toplevelSurfaceAdded, this, [this] (WXdgToplevelSurface *surface) {
@@ -203,7 +182,7 @@ void Helper::init()
                 parentWrapper->addSubSurface(wrapper);
                 container->addSurface(wrapper);
             } else {
-                m_workspace->addSurface(wrapper);
+                m_popupContainer->addSurface(wrapper); //TODO
             }
         };
 
@@ -227,20 +206,6 @@ void Helper::init()
         Q_ASSERT(wrapper->parentItem());
     });
     connect(xdgShell, &WXdgShell::popupSurfaceRemoved, this, [this] (WXdgPopupSurface *surface) {
-        m_surfaceContainer->destroyForSurface(surface->surface());
-    });
-
-    connect(layerShell, &WLayerShell::surfaceAdded, this, [this] (WLayerSurface *surface) {
-        auto wrapper = new SurfaceWrapper(qmlEngine(), surface, SurfaceWrapper::Type::Layer);
-        updateLayerSurfaceContainer(wrapper);
-
-        connect(surface, &WLayerSurface::layerChanged, this, [this, wrapper] {
-            updateLayerSurfaceContainer(wrapper);
-        });
-        Q_ASSERT(wrapper->parentItem());
-    });
-
-    connect(layerShell, &WLayerShell::surfaceRemoved, this, [this] (WLayerSurface *surface) {
         m_surfaceContainer->destroyForSurface(surface->surface());
     });
 
@@ -616,32 +581,6 @@ void Helper::setOutputMode(OutputMode mode)
 void Helper::setOutputProxy(Output *output)
 {
 
-}
-
-void Helper::updateLayerSurfaceContainer(SurfaceWrapper *surface)
-{
-    auto layer = qobject_cast<WLayerSurface*>(surface->shellSurface());
-    Q_ASSERT(layer);
-
-    if (auto oldContainer = surface->container())
-        oldContainer->removeSurface(surface);
-
-    switch (layer->layer()) {
-    case WLayerSurface::LayerType::Background:
-        m_backgroundContainer->addSurface(surface);
-        break;
-    case WLayerSurface::LayerType::Bottom:
-        m_bottomContainer->addSurface(surface);
-        break;
-    case WLayerSurface::LayerType::Top:
-        m_topContainer->addSurface(surface);
-        break;
-    case WLayerSurface::LayerType::Overlay:
-        m_overlayContainer->addSurface(surface);
-        break;
-    default:
-        Q_UNREACHABLE_RETURN();
-    }
 }
 
 int Helper::currentUserId() const

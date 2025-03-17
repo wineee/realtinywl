@@ -31,10 +31,7 @@ class Output : public SurfaceListModel
 {
     Q_OBJECT
     QML_ANONYMOUS
-    Q_PROPERTY(QMargins exclusiveZone READ exclusiveZone NOTIFY exclusiveZoneChanged FINAL)
-    Q_PROPERTY(QRectF validRect READ validRect NOTIFY exclusiveZoneChanged FINAL)
     Q_PROPERTY(WOutputItem* outputItem MEMBER m_item CONSTANT)
-    Q_PROPERTY(SurfaceListModel* minimizedSurfaces MEMBER minimizedSurfaces CONSTANT)
     Q_PROPERTY(WOutputViewport* screenViewport MEMBER m_outputViewport CONSTANT)
 
 public:
@@ -57,11 +54,8 @@ public:
     WOutput *output() const;
     WOutputItem *outputItem() const;
 
-    QMargins exclusiveZone() const;
     QRectF rect() const;
     QRectF geometry() const;
-    QRectF validRect() const;
-    QRectF validGeometry() const;
     WOutputViewport *screenViewport() const;
     void updatePositionFromLayout();
 
@@ -75,10 +69,6 @@ public Q_SLOTS:
 private:
     friend class SurfaceWrapper;
 
-    void setExclusiveZone(Qt::Edge edge, QObject *object, int value);
-    bool removeExclusiveZone(QObject *object);
-    void layoutLayerSurface(SurfaceWrapper *surface);
-    void layoutLayerSurfaces();
     void layoutNonLayerSurface(SurfaceWrapper *surface, const QSizeF &sizeDiff);
     void layoutPopupSurface(SurfaceWrapper *surface);
     void layoutNonLayerSurfaces();
@@ -92,12 +82,6 @@ private:
     QPointer<QQuickItem> m_taskBar;
     QPointer<QQuickItem> m_menuBar;
     WOutputViewport *m_outputViewport;
-
-    QMargins m_exclusiveZone;
-    QList<std::pair<QObject*, int>> m_topExclusiveZones;
-    QList<std::pair<QObject*, int>> m_bottomExclusiveZones;
-    QList<std::pair<QObject*, int>> m_leftExclusiveZones;
-    QList<std::pair<QObject*, int>> m_rightExclusiveZones;
 
     QSizeF m_lastSizeOnLayoutNonLayerSurfaces;
     QList<WOutputLayer *> m_hardwareLayersOfPrimaryOutput;

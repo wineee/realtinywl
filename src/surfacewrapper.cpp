@@ -20,7 +20,6 @@ SurfaceWrapper::SurfaceWrapper(QmlEngine *qmlEngine, WToplevelSurface *shellSurf
     , m_type(type)
     , m_positionAutomatic(true)
     , m_clipInOutput(false)
-    , m_alwaysOnTop(false)
 {
     QQmlEngine::setContextForObject(this, qmlEngine->rootContext());
 
@@ -58,11 +57,6 @@ SurfaceWrapper::SurfaceWrapper(QmlEngine *qmlEngine, WToplevelSurface *shellSurf
     });
     shellSurface->safeConnect(&WToplevelSurface::requestFullscreen, this, &SurfaceWrapper::requestFullscreen);
     shellSurface->safeConnect(&WToplevelSurface::requestCancelFullscreen, this, &SurfaceWrapper::requestCancelFullscreen);
-    if (type == Type::XdgToplevel) {
-        shellSurface->safeConnect(&WToplevelSurface::requestShowWindowMenu, this, [this](WSeat *, QPoint pos, quint32) {
-            Q_EMIT requestShowWindowMenu(pos);
-        });
-    }
 
     connect(m_surfaceItem, &WSurfaceItem::boundingRectChanged, this, &SurfaceWrapper::updateBoundingRect);
     connect(m_surfaceItem, &WSurfaceItem::implicitWidthChanged, this, [this] {
@@ -197,7 +191,7 @@ void SurfaceWrapper::setMaximizedGeometry(const QRectF &newMaximizedGeometry)
     // This geometry change might be caused by a change in the output size due to screen scaling.
     // Ensure that the surfaceSizeRatio is updated before modifying the window size
     // to avoid incorrect sizing of Xwayland windows.
-    updateSurfaceSizeRatio();
+    //updateSurfaceSizeRatio();
 
     if (m_surfaceState == State::Maximized) {
         setPosition(newMaximizedGeometry.topLeft());
@@ -222,7 +216,7 @@ void SurfaceWrapper::setFullscreenGeometry(const QRectF &newFullscreenGeometry)
     // This geometry change might be caused by a change in the output size due to screen scaling.
     // Ensure that the surfaceSizeRatio is updated before modifying the window size
     // to avoid incorrect sizing of Xwayland windows.
-    updateSurfaceSizeRatio();
+    //updateSurfaceSizeRatio();
 
     if (m_surfaceState == State::Fullscreen) {
         setPosition(newFullscreenGeometry.topLeft());
@@ -231,32 +225,7 @@ void SurfaceWrapper::setFullscreenGeometry(const QRectF &newFullscreenGeometry)
         m_geometryAnimation->setProperty("targetGeometry", newFullscreenGeometry);
     }
 
-    emit fullscreenGeometryChanged();
-
     updateClipRect();
-}
-
-QRectF SurfaceWrapper::tilingGeometry() const
-{
-    return m_tilingGeometry;
-}
-
-void SurfaceWrapper::setTilingGeometry(const QRectF &newTilingGeometry)
-{
-    if (m_tilingGeometry == newTilingGeometry)
-        return;
-    m_tilingGeometry = newTilingGeometry;
-    // This geometry change might be caused by a change in the output size due to screen scaling.
-    // Ensure that the surfaceSizeRatio is updated before modifying the window size
-    // to avoid incorrect sizing of Xwayland windows.
-    updateSurfaceSizeRatio();
-
-    if (m_surfaceState == State::Tiling) {
-        setPosition(newTilingGeometry.topLeft());
-        resize(newTilingGeometry.size());
-    }
-
-    emit tilingGeometryChanged();
 }
 
 bool SurfaceWrapper::positionAutomatic() const
@@ -368,8 +337,6 @@ void SurfaceWrapper::setSurfaceState(State newSurfaceState)
         targetGeometry = m_fullscreenGeometry;
     } else if (newSurfaceState == State::Normal) {
         targetGeometry = m_normalGeometry;
-    } else if (newSurfaceState == State::Tiling) {
-        targetGeometry = m_tilingGeometry;
     }
 
     if (targetGeometry.isValid()) {
@@ -401,11 +368,6 @@ bool SurfaceWrapper::isMaximized() const
 bool SurfaceWrapper::isMinimized() const
 {
     return m_surfaceState == State::Minimized;
-}
-
-bool SurfaceWrapper::isTiling() const
-{
-    return m_surfaceState == State::Tiling;
 }
 
 bool SurfaceWrapper::isAnimationRunning() const
@@ -473,15 +435,6 @@ void SurfaceWrapper::geometryChange(const QRectF &newGeo, const QRectF &oldGeome
     updateClipRect();
 }
 
-void SurfaceWrapper::itemChange(ItemChange change, const ItemChangeData &data)
-{
-    if (change == ItemSceneChange) {
-        updateSurfaceSizeRatio();
-    }
-
-    return QQuickItem::itemChange(change, data);
-}
-
 void SurfaceWrapper::doSetSurfaceState(State newSurfaceState)
 {
     m_previousSurfaceState.setValueBypassingBindings(m_surfaceState);
@@ -498,7 +451,6 @@ void SurfaceWrapper::doSetSurfaceState(State newSurfaceState)
         m_shellSurface->setFullScreen(false);
         break;
     case State::Normal: [[fallthrough]];
-    case State::Tiling: [[fallthrough]];
     default:
         break;
     }
@@ -515,7 +467,6 @@ void SurfaceWrapper::doSetSurfaceState(State newSurfaceState)
         m_shellSurface->setFullScreen(true);
         break;
     case State::Normal: [[fallthrough]];
-    case State::Tiling: [[fallthrough]];
     default:
         break;
     }
@@ -712,7 +663,6 @@ void SurfaceWrapper::addSubSurface(SurfaceWrapper *surface)
 {
     Q_ASSERT(!surface->m_parentSurface);
     surface->m_parentSurface = this;
-    surface->updateExplicitAlwaysOnTop();
     m_subSurfaces.append(surface);
 }
 
@@ -720,7 +670,6 @@ void SurfaceWrapper::removeSubSurface(SurfaceWrapper *surface)
 {
     Q_ASSERT(surface->m_parentSurface == this);
     surface->m_parentSurface = nullptr;
-    surface->updateExplicitAlwaysOnTop();
     m_subSurfaces.removeOne(surface);
 }
 
@@ -763,62 +712,4 @@ QRectF SurfaceWrapper::clipRect() const
     }
 
     return QQuickItem::clipRect();
-}
-
-int SurfaceWrapper::workspaceId() const
-{
-    return m_workspaceId;
-}
-
-void SurfaceWrapper::setWorkspaceId(int newWorkspaceId)
-{
-    if (m_workspaceId == newWorkspaceId)
-        return;
-
-    bool onAllWorkspaceHasChanged = m_workspaceId == 0 || newWorkspaceId == 0;
-    m_workspaceId = newWorkspaceId;
-
-    if (onAllWorkspaceHasChanged)
-        Q_EMIT showOnAllWorkspaceChanged();
-    Q_EMIT workspaceIdChanged();
-}
-
-bool SurfaceWrapper::alwaysOnTop() const
-{
-    return m_alwaysOnTop;
-}
-
-void SurfaceWrapper::setAlwaysOnTop(bool alwaysOnTop)
-{
-    if (m_alwaysOnTop == alwaysOnTop)
-        return;
-    m_alwaysOnTop = alwaysOnTop;
-    updateExplicitAlwaysOnTop();
-
-    Q_EMIT alwaysOnTopChanged();
-}
-
-bool SurfaceWrapper::showOnAllWorkspace() const
-{
-    return m_workspaceId == 0;
-}
-
-void SurfaceWrapper::updateExplicitAlwaysOnTop()
-{
-    int newExplicitAlwaysOnTop = m_alwaysOnTop;
-    if (m_parentSurface)
-        newExplicitAlwaysOnTop += m_parentSurface->m_explicitAlwaysOnTop;
-
-    if (m_explicitAlwaysOnTop == newExplicitAlwaysOnTop)
-        return;
-
-    m_explicitAlwaysOnTop = newExplicitAlwaysOnTop;
-    setZ(m_explicitAlwaysOnTop ? 1 : 0);
-    for (const auto& sub : std::as_const(m_subSurfaces))
-        sub->updateExplicitAlwaysOnTop();
-}
-
-void SurfaceWrapper::updateSurfaceSizeRatio()
-{
-
 }
