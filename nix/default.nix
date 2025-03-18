@@ -17,8 +17,8 @@
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  pname = "WayGreet";
-  version = "0.2.2";
+  pname = "waygreet";
+  version = "0.0.1";
 
   src = nix-filter.filter {
     root = ./..;

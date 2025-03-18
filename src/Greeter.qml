@@ -5,197 +5,220 @@ import QtQuick.Controls
 Item {
     id: root
 
-    property color color1: "#0b135b"
-    property color color2: "#74478a"
+    readonly property color backgroundColor: Qt.rgba(0, 0, 0, 0.4)
+    readonly property color hoverBackgroundColor: Qt.rgba(0, 0, 0, 0.6)
+
+    LayoutMirroring.enabled: Qt.locale().textDirection == Qt.RightToLeft
+    LayoutMirroring.childrenInherit: true
+
+    Connections {
+        target: Greetd
+
+        function onSessionSuccess() {
+        }
+        function onSessionError(type, description) {
+            if (type == "auth_error") {
+                pw_entry.clear()
+                pw_entry.focus = true
+
+                errorMsgContainer.visible = true
+            } else {
+                console.log(type, description);
+            }
+        }
+        function onInfoMessage(message) {
+            console.log(message);
+        }
+        function onErrorMessage(message) {
+            console.log(message);
+        }
+    }
 
     Item {
         anchors.fill: parent
 
+        Rectangle {
+            anchors.fill: parent
+            color: "blue"
+        }
+
         Image {
             anchors.fill: parent
-            source: "file:///home/rewine/pic/desktop.png" // TODO: use config
+            source: "file:///home/rewine/pic/desktop.jpg" // TODO: use config
+        }
+    }
+
+    ListModel {
+        id: userModel
+        ListElement {
+            name: "testuser1"
+            realName: "1111"
         }
 
-        Pane {
-            id: pane
+        ListElement {
+            name: "testuser2"
+            realName: "2222"
+        }
+    }
+
+    Column {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 10
+
+        SimpleComboBox {
+            id: user_entry
+            model: userModel
+            // currentIndex: userModel.lastIndex
+            textRole: "realName"
+            width: 250
+            KeyNavigation.backtab: session
+            KeyNavigation.tab: pw_entry
+        }
+
+        TextField {
+            id: pw_entry
+            color: "white"
+            echoMode: TextInput.Password
+            focus: true
+            placeholderText: "Enter your password"
+            width: 250
+            background: Rectangle {
+                implicitWidth: 100
+                implicitHeight: 30
+                color: pw_entry.activeFocus ? hoverBackgroundColor : backgroundColor
+                border.color: Qt.rgba(1, 1, 1, 0.4)
+                radius: 3
+            }
+            onAccepted: Greetd.login(user_entry.getValue(), pw_entry.text) // session.currentIndex
+            KeyNavigation.backtab: user_entry
+            KeyNavigation.tab: loginButton
+        }
+
+        SimpleButton {
+            id: loginButton
+            text: "login"
+            width: 250
+            onClicked: Greetd.login(user_entry.getValue(), pw_entry.text) // session.currentIndex
+            KeyNavigation.backtab: pw_entry
+            KeyNavigation.tab: suspend
+        }
+
+        Rectangle {
+            id: errorMsgContainer
+            width: 250
+            height: loginButton.height
+            color: "#F44336"
+            clip: true
+            visible: false
+            radius: 3
+
+            Label {
+                anchors.centerIn: parent
+                text: "Login failed"
+                width: 240
+                color: "white"
+                font.bold: true
+                elide: Qt.locale().textDirection === Qt.RightToLeft ? Text.ElideLeft : Text.ElideRight
+                horizontalAlignment: Qt.AlignHCenter
+            }
+        }
+
+    }
+
+    Row {
+        anchors {
+            bottom: parent.bottom
+            bottomMargin: 10
+            horizontalCenter: parent.horizontalCenter
+        }
+
+        spacing: 5
+
+        SimpleButton {
+            id: suspend
+            text: "suspend"
+            //onClicked: sddm.suspend()
+            //visible: sddm.canSuspend
+            KeyNavigation.backtab: loginButton
+            KeyNavigation.tab: hibernate
+        }
+
+        SimpleButton {
+            id: hibernate
+            text: "hibernate"
+            //onClicked: sddm.hibernate()
+            //visible: sddm.canHibernate
+            KeyNavigation.backtab: suspend
+            KeyNavigation.tab: restart
+        }
+
+        SimpleButton {
+            id: restart
+            text: "reboot"
+            //onClicked: sddm.reboot()
+            //visible: sddm.canReboot
+            KeyNavigation.backtab: suspend
+            KeyNavigation.tab: shutdown
+        }
+
+        SimpleButton {
+            id: shutdown
+            text: "shutdown"
+            //onClicked: sddm.powerOff()
+            //visible: sddm.canPowerOff
+            KeyNavigation.backtab: restart
+            //KeyNavigation.tab: session
+        }
+    }
+
+    SimpleComboBox {
+        id: session
+        anchors {
+            left: parent.left
+            leftMargin: 10
+            top: parent.top
+            topMargin: 10
+        }
+        currentIndex: sessionModel.lastIndex
+        model: sessionModel
+        textRole: "name"
+        width: 200
+        visible: sessionModel.rowCount() > 1
+        KeyNavigation.backtab: shutdown
+        KeyNavigation.tab: user_entry
+    }
+
+    Rectangle {
+        id: timeContainer
+        anchors {
+            top: parent.top
+            right: parent.right
+            topMargin: 10
+            rightMargin: 10
+        }
+        border.color: Qt.rgba(1, 1, 1, 0.4)
+        radius: 3
+        color: backgroundColor
+        width: timelb.width + 10
+        height: session.height
+
+        Label {
+            id: timelb
             anchors.centerIn: parent
-            width: 400
-            height: 360
-
-            ColumnLayout {
-                anchors {
-                    centerIn: parent
-                    verticalCenterOffset: 30
-                }
-
-                Image {
-                    Layout.alignment: Qt.AlignCenter
-                    Layout.preferredWidth: 128
-                    Layout.preferredHeight: 128
-                    source: "file:///home/rewine/pic/test.png" //Backend.iconsSrc + "/" + Backend.user
-                }
-
-                Label {
-                    Layout.alignment: Qt.AlignCenter
-                    font.bold: true
-                    font.pointSize: 13
-                    font.capitalization: Font.AllUppercase
-                    text: "testuser"//Backend.user
-                    opacity: 0.85
-                    color: root.color1
-                }
-
-                TextField {
-                    id: passwordField
-                    Layout.alignment: Qt.AlignCenter
-                    Layout.topMargin: 20
-                    Layout.preferredWidth: 180
-                    Layout.maximumHeight: 40
-                    echoMode: TextInput.Password
-                    horizontalAlignment: TextInput.AlignHCenter
-                    color: root.color2
-                    Component.onCompleted: forceActiveFocus()
-                    onAccepted: {
-                        if (text) {
-                            enabled = false;
-                            Greetd.authenticate("testuser", passwordField.text);
-                        }
-                    }
-
-                    function wrongPassword() {
-                        selectAll();
-                        wrongPasswordAnimation.start();
-                    }
-
-                    transform: Translate {
-                        id: passwordFieldTranslate
-                        x: 0
-                    }
-
-                    SequentialAnimation {
-                        id: wrongPasswordAnimation
-                        loops: 3
-                        onFinished: passwordField.enabled = true
-
-                        PropertyAnimation {
-                            target: passwordFieldTranslate
-                            property: "x"
-                            from: 0
-                            to: 10
-                            duration: 25
-                            easing.type: Easing.InQuad
-                        }
-
-                        PropertyAnimation {
-                            target: passwordFieldTranslate
-                            property: "x"
-                            from: 10
-                            to: -10
-                            duration: 50
-                            easing.type: Easing.OutInQuad
-                        }
-
-                        PropertyAnimation {
-                            target: passwordFieldTranslate
-                            property: "x"
-                            from: -10
-                            to: 0
-                            duration: 25
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-                }
-            }
-
-            Label {
-                id: timeLabel
-                anchors {
-                    top: parent.top
-                    right: parent.right
-                    topMargin: -5
-                }
-                font.bold: true
-                font.pointSize: 11
-                opacity: 0.8
-                color: root.color1
-                Component.onCompleted: update()
-
-                function update() {
-                    text = Qt.formatTime(new Date(), "hh:mm");
-                }
-
-                Timer {
-                    interval: 1000
-                    repeat: true
-                    running: true
-                    onTriggered: timeLabel.update()
-                }
-            }
-
-            Label {
-                id: dateLabel
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    topMargin: -5
-                }
-                font.bold: true
-                font.pointSize: 11
-                opacity: 0.8
-                color: root.color1
-                text: Qt.formatDate(new Date(), "ddd, MMM dd");
-            }
-
-            ParallelAnimation {
-                id: hideAnimation
-                onFinished: Qt.quit()
-
-                PropertyAnimation {
-                    target: pane
-                    property: "scale"
-                    from: 1.0
-                    to: 0.7
-                    duration: 150
-                    easing.type: Easing.InOutQuad
-                }
-
-                PropertyAnimation {
-                    target: pane
-                    property: "opacity"
-                    from: 1.0
-                    to: 0.0
-                    duration: 150
-                    easing.type: Easing.InOutQuad
-                }
-
-                PauseAnimation {
-                    duration: 300
-                }
-            }
+            text: Qt.formatDateTime(new Date(), "HH:mm")
+            color: "white"
+            horizontalAlignment: Text.AlignHCenter
         }
+    }
 
-        // Connections {
-        //     target: Backend
-
-        //     function onSessionSuccess() {
-        //         hideAnimation.start();
-        //     }
-
-        //     function onSessionError(type, description) {
-        //         if (type == "auth_error") {
-        //             passwordField.wrongPassword();
-        //         } else {
-        //             console.log(type, description);
-        //         }
-        //     }
-
-        //     function onInfoMessage(message) {
-        //         console.log(message);
-        //     }
-
-        //     function onErrorMessage(message) {
-        //         console.log(message);
-        //     }
-        // }
+    Timer {
+        id: timetr
+        interval: 500
+        repeat: true
+        running: true
+        onTriggered: {
+            timelb.text = Qt.formatDateTime(new Date(), "HH:mm")
+        }
     }
 }

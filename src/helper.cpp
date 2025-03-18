@@ -33,7 +33,6 @@
 #include <wseat.h>
 #include <wsocket.h>
 #include <wtoplevelsurface.h>
-#include <wxdgdecorationmanager.h>
 
 #include <qwbackend.h>
 #include <qwdisplay.h>
@@ -43,7 +42,6 @@
 #include <qwrenderer.h>
 #include <qwcompositor.h>
 #include <qwsubcompositor.h>
-#include <qwscreencopyv1.h>
 #include <qwfractionalscalemanagerv1.h>
 #include <qwgammacontorlv1.h>
 #include <qwbuffer.h>
@@ -68,7 +66,7 @@
 Helper *Helper::m_instance = nullptr;
 Helper::Helper(QObject *parent)
     : WSeatEventFilter(parent)
-    , m_greetd(new GreetdLogin)
+    , m_greetd(new Backend)
     , m_renderWindow(new WOutputRenderWindow(this))
     , m_server(new WServer(this))
     , m_surfaceContainer(new RootSurfaceContainer(m_renderWindow->contentItem()))
@@ -222,7 +220,6 @@ void Helper::init()
     // free follow display
     m_compositor = qw_compositor::create(*m_server->handle(), 6, *m_renderer);
     qw_subcompositor::create(*m_server->handle());
-    qw_screencopy_manager_v1::create(*m_server->handle());
     qw_viewporter::create(*m_server->handle());
     m_renderWindow->init(m_renderer, m_allocator);
 

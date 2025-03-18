@@ -4,7 +4,7 @@
 #pragma once
 
 #include "qmlengine.h"
-#include "GreetdManager.hpp"
+#include "backend.h"
 #include "surfacecontainer.h"
 
 #include <wglobal.h>
@@ -131,7 +131,7 @@ private:
     static Helper *m_instance;
 
     // Greeter Backends
-    GreetdLogin *m_greetd = nullptr;
+    Backend *m_greetd = nullptr;
 
     // qtquick helper
     WOutputRenderWindow *m_renderWindow = nullptr;

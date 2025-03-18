@@ -103,13 +103,17 @@
                 };
               };
 
-              users.users.test = {
+              users.users.testuser1 = {
                 isNormalUser = true;
                 uid = 1000;
                 extraGroups = [
                   "wheel"
                   "networkmanager"
                 ];
+                password = "test";
+              };
+              users.users.testuser2 = {
+                isNormalUser = true;
                 password = "test";
               };
               virtualisation = {

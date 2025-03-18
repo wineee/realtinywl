@@ -34,13 +34,14 @@ qt_add_qml_module(${TARGET}
     SOURCES qmlengine.h qmlengine.cpp
     SOURCES surfacecontainer.h surfacecontainer.cpp
     SOURCES rootsurfacecontainer.h rootsurfacecontainer.cpp
-    SOURCES GreetdManager.hpp GreetdManager.cpp
+    # SOURCES GreetdManager.hpp GreetdManager.cpp
+    SOURCES ipc.h ipc.cpp backend.h backend.cpp session.h session.cpp
 
     QML_FILES PrimaryOutput.qml
     QML_FILES CopyOutput.qml
     QML_FILES SurfaceContent.qml
     QML_FILES OutputMenuBar.qml
-    QML_FILES Greeter.qml
+    QML_FILES Greeter.qml SimpleButton.qml SimpleComboBox.qml
 )
 
 target_compile_definitions(${TARGET}
