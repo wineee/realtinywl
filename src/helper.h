@@ -5,7 +5,6 @@
 
 #include "qmlengine.h"
 #include "backend.h"
-#include "surfacecontainer.h"
 
 #include <wglobal.h>
 #include <wqmlcreator.h>
@@ -13,9 +12,6 @@
 
 #include <QObject>
 #include <QQmlApplicationEngine>
-
-Q_MOC_INCLUDE(<wtoplevelsurface.h>)
-Q_MOC_INCLUDE("surfacewrapper.h")
 
 QT_BEGIN_NAMESPACE
 class QQuickItem;
@@ -55,10 +51,7 @@ class Helper : public WSeatEventFilter
 {
     friend class RootSurfaceContainer;
     Q_OBJECT
-    Q_PROPERTY(bool socketEnabled READ socketEnabled WRITE setSocketEnabled NOTIFY socketEnabledChanged FINAL)
-    Q_PROPERTY(SurfaceWrapper* activatedSurface READ activatedSurface NOTIFY activatedSurfaceChanged FINAL)
     Q_PROPERTY(RootSurfaceContainer* rootContainer READ rootContainer CONSTANT FINAL)
-    Q_PROPERTY(int currentUserId READ currentUserId WRITE setCurrentUserId NOTIFY currentUserIdChanged FINAL)
     Q_PROPERTY(OutputMode outputMode READ outputMode WRITE setOutputMode NOTIFY outputModeChanged FINAL)
     QML_ELEMENT
     QML_SINGLETON
@@ -80,24 +73,13 @@ public:
     Output* output() const;
     void init();
 
-    bool socketEnabled() const;
-    void setSocketEnabled(bool newSocketEnabled);
-
-    void activeSurface(SurfaceWrapper *wrapper, Qt::FocusReason reason);
-
     RootSurfaceContainer *rootContainer() const;
     Output *getOutput(WOutput *output) const;
-
-    int currentUserId() const;
-    void setCurrentUserId(int uid);
 
     OutputMode outputMode() const;
     void setOutputMode(OutputMode mode);
 
     Q_INVOKABLE void addOutput();
-
-public Q_SLOTS:
-    void activeSurface(SurfaceWrapper *wrapper);
 
 signals:
     void socketEnabledChanged();
@@ -117,16 +99,10 @@ private:
 
     void setOutputProxy(Output *output);
 
-    SurfaceWrapper *keyboardFocusSurface() const;
-    void setKeyboardFocusSurface(SurfaceWrapper *newActivateSurface, Qt::FocusReason reason);
-    SurfaceWrapper *activatedSurface() const;
-    void setActivatedSurface(SurfaceWrapper *newActivateSurface);
-
     void setCursorPosition(const QPointF &position);
 
     bool beforeDisposeEvent(WSeat *seat, QWindow *watched, QInputEvent *event) override;
     bool afterHandleEvent(WSeat *seat, WSurface *watched, QObject *surfaceItem, QObject *, QInputEvent *event) override;
-    bool unacceptedEvent(WSeat *, QWindow *, QInputEvent *event) override;
 
     static Helper *m_instance;
 
@@ -146,16 +122,11 @@ private:
 
     // protocols
     qw_compositor *m_compositor = nullptr;
-    WInputMethodHelper *m_inputMethodHelper = nullptr;
 
     // privaet data
     QList<Output*> m_outputList;
 
-    QPointer<SurfaceWrapper> m_keyboardFocusSurface;
-    QPointer<SurfaceWrapper> m_activatedSurface;
-
     RootSurfaceContainer *m_surfaceContainer = nullptr;
-    SurfaceContainer *m_popupContainer = nullptr;
     int m_currentUserId = -1;
     OutputMode m_mode = OutputMode::Extension;
 };

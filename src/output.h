@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 #pragma once
 
-#include "surfacecontainer.h"
-
 #include <wglobal.h>
 #include <QMargins>
 #include <QObject>
@@ -26,8 +24,7 @@ WAYLIB_SERVER_END_NAMESPACE
 
 WAYLIB_SERVER_USE_NAMESPACE
 
-class SurfaceWrapper;
-class Output : public SurfaceListModel
+class Output : public QObject
 {
     Q_OBJECT
     QML_ANONYMOUS
@@ -48,9 +45,6 @@ public:
 
     bool isPrimary() const;
 
-    void addSurface(SurfaceWrapper *surface) override;
-    void removeSurface(SurfaceWrapper *surface) override;
-
     WOutput *output() const;
     WOutputItem *outputItem() const;
 
@@ -69,16 +63,11 @@ public Q_SLOTS:
 private:
     friend class SurfaceWrapper;
 
-    void layoutNonLayerSurface(SurfaceWrapper *surface, const QSizeF &sizeDiff);
-    void layoutPopupSurface(SurfaceWrapper *surface);
-    void layoutNonLayerSurfaces();
-    void layoutAllSurfaces();
     std::pair<WOutputViewport*, QQuickItem*> getOutputItemProperty();
 
     Type m_type;
     WOutputItem *m_item;
     Output *m_proxy = nullptr;
-    SurfaceFilterModel *minimizedSurfaces;
     QPointer<QQuickItem> m_taskBar;
     QPointer<QQuickItem> m_menuBar;
     WOutputViewport *m_outputViewport;

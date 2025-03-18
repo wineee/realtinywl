@@ -29,10 +29,8 @@ qt_add_qml_module(${TARGET}
     VERSION "1.0"
 
     SOURCES helper.h helper.cpp
-    SOURCES surfacewrapper.h surfacewrapper.cpp
     SOURCES output.h output.cpp
     SOURCES qmlengine.h qmlengine.cpp
-    SOURCES surfacecontainer.h surfacecontainer.cpp
     SOURCES rootsurfacecontainer.h rootsurfacecontainer.cpp
     # SOURCES GreetdManager.hpp GreetdManager.cpp
     SOURCES ipc.h ipc.cpp backend.h backend.cpp session.h session.cpp

@@ -3,7 +3,6 @@
 
 #include "output.h"
 #include "qmlengine.h"
-#include "surfacewrapper.h"
 
 #include <woutputitem.h>
 

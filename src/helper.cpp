@@ -2,37 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0 OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include "helper.h"
-#include "surfacewrapper.h"
 #include "output.h"
 #include "qmlengine.h"
-#include "surfacecontainer.h"
 #include "rootsurfacecontainer.h"
 
 #include <WServer>
 #include <WOutput>
-#include <WSurfaceItem>
 #include <qqmlengine.h>
 #include <wxdgpopupsurface.h>
 #include <wxdgtoplevelsurface.h>
-#include <winputpopupsurface.h>
 #include <wrenderhelper.h>
 #include <WBackend>
-#include <wxdgshell.h>
 #include <woutputitem.h>
 #include <wquickcursor.h>
 #include <woutputrenderwindow.h>
-#include <wqmlcreator.h>
-#include <winputmethodhelper.h>
-#include <WForeignToplevel>
-#include <WXdgOutput>
 #include <woutputmanagerv1.h>
-#include <wcursorshapemanagerv1.h>
 #include <woutputitem.h>
 #include <woutputlayout.h>
 #include <woutputviewport.h>
 #include <wseat.h>
 #include <wsocket.h>
-#include <wtoplevelsurface.h>
 
 #include <qwbackend.h>
 #include <qwdisplay.h>
@@ -41,11 +30,7 @@
 #include <qwallocator.h>
 #include <qwrenderer.h>
 #include <qwcompositor.h>
-#include <qwsubcompositor.h>
-#include <qwfractionalscalemanagerv1.h>
-#include <qwgammacontorlv1.h>
 #include <qwbuffer.h>
-#include <qwdatacontrolv1.h>
 #include <qwviewporter.h>
 
 #include <QGuiApplication>
@@ -70,10 +55,7 @@ Helper::Helper(QObject *parent)
     , m_renderWindow(new WOutputRenderWindow(this))
     , m_server(new WServer(this))
     , m_surfaceContainer(new RootSurfaceContainer(m_renderWindow->contentItem()))
-    , m_popupContainer(new SurfaceContainer(m_surfaceContainer))
 {
-    setCurrentUserId(getuid());
-
     Q_ASSERT(!m_instance);
     m_instance = this;
 
@@ -82,16 +64,10 @@ Helper::Helper(QObject *parent)
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
     m_surfaceContainer->setFocusPolicy(Qt::StrongFocus);
 #endif
-    m_popupContainer->setZ(RootSurfaceContainer::PopupZOrder);
 }
 
 Helper::~Helper()
 {
-    for (auto s : m_surfaceContainer->surfaces()) {
-        if (auto c = s->container())
-            c->removeSurface(s);
-    }
-
     delete m_surfaceContainer;
     Q_ASSERT(m_instance == this);
     m_instance = nullptr;
@@ -117,7 +93,7 @@ void Helper::init()
     auto engine = qmlEngine();
     engine->setContextForObject(m_renderWindow, engine->rootContext());
     engine->setContextForObject(m_renderWindow->contentItem(), engine->rootContext());
-    m_surfaceContainer->setQmlEngine(engine);
+    //m_surfaceContainer->setQmlEngine(engine);
     engine->rootContext()->setContextProperty("Greetd", m_greetd);
 
     m_surfaceContainer->init(m_server);
@@ -135,8 +111,7 @@ void Helper::init()
         m_seat->detachInputDevice(device);
     });
 
-    auto wOutputManager = m_server->attach<WOutputManagerV1>();
-    connect(m_backend, &WBackend::outputAdded, this, [this, wOutputManager] (WOutput *output) {
+    connect(m_backend, &WBackend::outputAdded, this, [this] (WOutput *output) {
         allowNonDrmOutputAutoChangeMode(output);
         Output *o;
         if (m_mode == OutputMode::Extension || !m_surfaceContainer->primaryOutput()) {
@@ -149,62 +124,14 @@ void Helper::init()
 
         m_outputList.append(o);
         enableOutput(output);
-        wOutputManager->newOutput(output);
     });
 
-    connect(m_backend, &WBackend::outputRemoved, this, [this, wOutputManager] (WOutput *output) {
+    connect(m_backend, &WBackend::outputRemoved, this, [this] (WOutput *output) {
         auto index = indexOfOutput(output);
         Q_ASSERT(index >= 0);
         const auto o = m_outputList.takeAt(index);
-        wOutputManager->removeOutput(output);
         m_surfaceContainer->removeOutput(o);
         delete o;
-    });
-
-    auto *xdgShell = m_server->attach<WXdgShell>(5);
-    auto *xdgOutputManager = m_server->attach<WXdgOutputManager>(m_surfaceContainer->outputLayout());
-
-    connect(xdgShell, &WXdgShell::toplevelSurfaceAdded, this, [this] (WXdgToplevelSurface *surface) {
-        auto wrapper = new SurfaceWrapper(qmlEngine(), surface, SurfaceWrapper::Type::XdgToplevel);
-
-        auto updateSurfaceWithParentContainer = [this, wrapper, surface] {
-            if (wrapper->parentSurface())
-                wrapper->parentSurface()->removeSubSurface(wrapper);
-            if (wrapper->container())
-                wrapper->container()->removeSurface(wrapper);
-
-            if (auto parent = surface->parentSurface()) {
-                auto parentWrapper = m_surfaceContainer->getSurface(parent);
-                auto container = parentWrapper->container();
-                Q_ASSERT(container);
-                parentWrapper->addSubSurface(wrapper);
-                container->addSurface(wrapper);
-            } else {
-                m_popupContainer->addSurface(wrapper); //TODO
-            }
-        };
-
-        surface->safeConnect(&WXdgToplevelSurface::parentXdgSurfaceChanged, this, updateSurfaceWithParentContainer);
-        updateSurfaceWithParentContainer();
-
-        Q_ASSERT(wrapper->parentItem());
-    });
-    connect(xdgShell, &WXdgShell::toplevelSurfaceRemoved, this, [this] (WXdgToplevelSurface *surface) {
-        m_surfaceContainer->destroyForSurface(surface->surface());
-    });
-
-    connect(xdgShell, &WXdgShell::popupSurfaceAdded, this, [this] (WXdgPopupSurface *surface) {
-        auto wrapper = new SurfaceWrapper(qmlEngine(), surface, SurfaceWrapper::Type::XdgPopup);
-        auto parent = surface->parentSurface();
-        auto parentWrapper = m_surfaceContainer->getSurface(parent);
-        parentWrapper->addSubSurface(wrapper);
-        m_popupContainer->addSurface(wrapper);
-        wrapper->setOwnsOutput(parentWrapper->ownsOutput());
-
-        Q_ASSERT(wrapper->parentItem());
-    });
-    connect(xdgShell, &WXdgShell::popupSurfaceRemoved, this, [this] (WXdgPopupSurface *surface) {
-        m_surfaceContainer->destroyForSurface(surface->surface());
     });
 
     m_server->start();
@@ -219,25 +146,8 @@ void Helper::init()
 
     // free follow display
     m_compositor = qw_compositor::create(*m_server->handle(), 6, *m_renderer);
-    qw_subcompositor::create(*m_server->handle());
     qw_viewporter::create(*m_server->handle());
     m_renderWindow->init(m_renderer, m_allocator);
-
-    m_inputMethodHelper = new WInputMethodHelper(m_server, m_seat);
-
-    connect(m_inputMethodHelper, &WInputMethodHelper::inputPopupSurfaceV2Added, this, [this](WInputPopupSurface *inputPopup) {
-        auto wrapper = new SurfaceWrapper(qmlEngine(), inputPopup, SurfaceWrapper::Type::InputPopup);
-        auto parent = inputPopup->parentSurface();;
-        auto parentWrapper = m_surfaceContainer->getSurface(parent);
-        parentWrapper->addSubSurface(wrapper);
-        m_popupContainer->addSurface(wrapper);
-        wrapper->setOwnsOutput(parentWrapper->ownsOutput());
-        Q_ASSERT(wrapper->parentItem());
-    });
-
-    connect(m_inputMethodHelper, &WInputMethodHelper::inputPopupSurfaceV2Removed, this, [this](WInputPopupSurface *inputPopup) {
-        m_surfaceContainer->destroyForSurface(inputPopup->surface());
-    });
 
     bool freezeClientWhenDisable = false;
     m_socket = new WSocket(freezeClientWhenDisable);
@@ -249,103 +159,14 @@ void Helper::init()
         return;
     }
 
-    auto gammaControlManager = qw_gamma_control_manager_v1::create(*m_server->handle());
-    connect(gammaControlManager, &qw_gamma_control_manager_v1::notify_set_gamma, this, [this]
-            (wlr_gamma_control_manager_v1_set_gamma_event *event) {
-        auto *qwOutput = qw_output::from(event->output);
-        size_t ramp_size = 0;
-        uint16_t *r = nullptr, *g = nullptr, *b = nullptr;
-        wlr_gamma_control_v1 *gamma_control = event->control;
-        if (gamma_control) {
-            ramp_size = gamma_control->ramp_size;
-            r = gamma_control->table;
-            g = gamma_control->table + gamma_control->ramp_size;
-            b = gamma_control->table + 2 * gamma_control->ramp_size;
-        }
-        qw_output_state newState;
-        newState.set_gamma_lut(ramp_size, r, g, b);
-
-        if (!qwOutput->commit_state(newState)) {
-            qw_gamma_control_v1::from(gamma_control)->send_failed_and_destroy();
-        }
-    });
-
-    connect(wOutputManager, &WOutputManagerV1::requestTestOrApply, this, [this, wOutputManager]
-            (qw_output_configuration_v1 *config, bool onlyTest) {
-        QList<WOutputState> states = wOutputManager->stateListPending();
-        bool ok = true;
-        for (auto state : std::as_const(states)) {
-            WOutput *output = state.output;
-            qw_output_state newState;
-
-            newState.set_enabled(state.enabled);
-            if (state.enabled) {
-                if (state.mode)
-                    newState.set_mode(state.mode);
-                else
-                    newState.set_custom_mode(state.customModeSize.width(),
-                                             state.customModeSize.height(),
-                                             state.customModeRefresh);
-
-                newState.set_adaptive_sync_enabled(state.adaptiveSyncEnabled);
-                if (!onlyTest) {
-                    newState.set_transform(static_cast<wl_output_transform>(state.transform));
-                    newState.set_scale(state.scale);
-
-                    WOutputViewport *viewport = getOutput(output)->screenViewport();
-                    if (viewport) {
-                        viewport->setX(state.x);
-                        viewport->setY(state.y);
-                    }
-                }
-            }
-
-            if (onlyTest)
-                ok &= output->handle()->test_state(newState);
-            else
-                ok &= output->handle()->commit_state(newState);
-        }
-        wOutputManager->sendResult(config, ok);
-    });
-
-    m_server->attach<WCursorShapeManagerV1>();
-    qw_fractional_scale_manager_v1::create(*m_server->handle(), WLR_FRACTIONAL_SCALE_V1_VERSION);
-    qw_data_control_manager_v1::create(*m_server->handle());
-
     m_backend->handle()->start();
 
     qInfo() << "Listing on:" << m_socket->fullServerName();
 }
 
-bool Helper::socketEnabled() const
-{
-    return m_socket->isEnabled();
-}
-
-void Helper::setSocketEnabled(bool newEnabled)
-{
-    if (m_socket)
-        m_socket->setEnabled(newEnabled);
-    else
-        qWarning() << "Can't set enabled for empty socket!";
-}
-
-void Helper::activeSurface(SurfaceWrapper *wrapper, Qt::FocusReason reason)
-{
-    if (!wrapper || wrapper->shellSurface()->hasCapability(WToplevelSurface::Capability::Activate))
-        setActivatedSurface(wrapper);
-    if (!wrapper || wrapper->shellSurface()->hasCapability(WToplevelSurface::Capability::Focus))
-        setKeyboardFocusSurface(wrapper, reason);
-}
-
 RootSurfaceContainer *Helper::rootContainer() const
 {
     return m_surfaceContainer;
-}
-
-void Helper::activeSurface(SurfaceWrapper *wrapper)
-{
-    activeSurface(wrapper, Qt::OtherFocusReason);
 }
 
 bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)
@@ -364,29 +185,6 @@ bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)
         seat->cursor()->setVisible(false);
     }
 
-    if (auto surface = m_surfaceContainer->moveResizeSurface()) {
-        // for move resize
-        if (Q_LIKELY(event->type() == QEvent::MouseMove || event->type() == QEvent::TouchUpdate)) {
-            auto cursor = seat->cursor();
-            Q_ASSERT(cursor);
-            QMouseEvent *ev = static_cast<QMouseEvent*>(event);
-
-            auto ownsOutput = surface->ownsOutput();
-            if (!ownsOutput) {
-                m_surfaceContainer->endMoveResize();
-                return false;
-            }
-
-            auto lastPosition = cursor->lastPressedOrTouchDownPosition();
-            auto increment_pos = ev->globalPosition() - lastPosition;
-            m_surfaceContainer->doMoveResize(increment_pos);
-
-            return true;
-        } else if (event->type() == QEvent::MouseButtonRelease || event->type() == QEvent::TouchEnd) {
-            m_surfaceContainer->endMoveResize();
-        }
-    }
-
     return false;
 }
 
@@ -394,93 +192,11 @@ bool Helper::afterHandleEvent(WSeat *seat, WSurface *watched, QObject *surfaceIt
 {
     Q_UNUSED(seat)
 
-    if (event->isSinglePointEvent() && static_cast<QSinglePointEvent*>(event)->isBeginEvent()) {
-        // surfaceItem is qml type: XdgSurfaceItem or LayerSurfaceItem
-        auto toplevelSurface = qobject_cast<WSurfaceItem*>(surfaceItem)->shellSurface();
-        if (!toplevelSurface)
-            return false;
-        Q_ASSERT(toplevelSurface->surface() == watched);
-
-        auto surface = m_surfaceContainer->getSurface(watched);
-        activeSurface(surface, Qt::MouseFocusReason);
-    }
-
     return false;
-}
-
-bool Helper::unacceptedEvent(WSeat *, QWindow *, QInputEvent *event)
-{
-    if (event->isSinglePointEvent()) {
-        if (static_cast<QSinglePointEvent*>(event)->isBeginEvent()) {
-            activeSurface(nullptr, Qt::OtherFocusReason);
-        }
-    }
-
-    return false;
-}
-
-SurfaceWrapper *Helper::keyboardFocusSurface() const
-{
-    return m_keyboardFocusSurface;
-}
-
-void Helper::setKeyboardFocusSurface(SurfaceWrapper *newActivate, Qt::FocusReason reason)
-{
-    if (m_keyboardFocusSurface == newActivate)
-        return;
-
-    if (newActivate && !newActivate->shellSurface()->hasCapability(WToplevelSurface::Capability::Focus))
-        return;
-
-    if (m_keyboardFocusSurface) {
-        if (newActivate) {
-            if (m_keyboardFocusSurface->shellSurface()->keyboardFocusPriority()
-                > newActivate->shellSurface()->keyboardFocusPriority())
-                return;
-        } else {
-            if (m_keyboardFocusSurface->shellSurface()->keyboardFocusPriority() > 0)
-                return;
-        }
-    }
-
-    if (newActivate) {
-        newActivate->setFocus(true, reason);
-        m_seat->setKeyboardFocusSurface(newActivate->surface());
-    } else if (m_keyboardFocusSurface) {
-        m_keyboardFocusSurface->setFocus(false, reason);
-        m_seat->setKeyboardFocusSurface(nullptr);
-    }
-
-    m_keyboardFocusSurface = newActivate;
-
-    Q_EMIT keyboardFocusSurfaceChanged();
-}
-
-SurfaceWrapper *Helper::activatedSurface() const
-{
-    return m_activatedSurface;
-}
-
-void Helper::setActivatedSurface(SurfaceWrapper *newActivateSurface)
-{
-    if (m_activatedSurface == newActivateSurface)
-        return;
-
-    if (newActivateSurface) {
-        newActivateSurface->stackToLast();
-    }
-
-    if (m_activatedSurface)
-        m_activatedSurface->setActivate(false);
-    if (newActivateSurface)
-        newActivateSurface->setActivate(true);
-    m_activatedSurface = newActivateSurface;
-    Q_EMIT activatedSurfaceChanged();
 }
 
 void Helper::setCursorPosition(const QPointF &position)
 {
-    m_surfaceContainer->endMoveResize();
     m_seat->setCursorPosition(position);
 }
 
@@ -578,19 +294,6 @@ void Helper::setOutputMode(OutputMode mode)
 void Helper::setOutputProxy(Output *output)
 {
 
-}
-
-int Helper::currentUserId() const
-{
-    return m_currentUserId;
-}
-
-void Helper::setCurrentUserId(int uid)
-{
-    if (m_currentUserId == uid)
-        return;
-    m_currentUserId = uid;
-    Q_EMIT currentUserIdChanged();
 }
 
 Helper::OutputMode Helper::outputMode() const
