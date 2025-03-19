@@ -1,4 +1,4 @@
-find_package(Qt6 COMPONENTS Quick QuickControls2 REQUIRED)
+find_package(Qt6 COMPONENTS Quick QuickControls2 DBus REQUIRED)
 find_package(Waylib REQUIRED Server)
 
 qt_standard_project_setup(REQUIRES 6.7)
@@ -32,8 +32,11 @@ qt_add_qml_module(${TARGET}
     SOURCES output.h output.cpp
     SOURCES qmlengine.h qmlengine.cpp
     SOURCES rootsurfacecontainer.h rootsurfacecontainer.cpp
-    # SOURCES GreetdManager.hpp GreetdManager.cpp
-    SOURCES ipc.h ipc.cpp backend.h backend.cpp session.h session.cpp
+    SOURCES
+        ipc.h ipc.cpp
+        backend.h backend.cpp
+        session.h session.cpp
+        powermanager.h powermanager.cpp
 
     QML_FILES PrimaryOutput.qml
     QML_FILES CopyOutput.qml
@@ -53,6 +56,7 @@ target_link_libraries(${TARGET}
     PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
+    Qt6::DBus
     Waylib::WaylibServer
     PkgConfig::PIXMAN
     PkgConfig::WAYLAND

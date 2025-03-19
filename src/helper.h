@@ -5,6 +5,7 @@
 
 #include "qmlengine.h"
 #include "backend.h"
+#include "powermanager.h"
 
 #include <wglobal.h>
 #include <wqmlcreator.h>
@@ -27,11 +28,8 @@ class WOutputItem;
 class WOutputViewport;
 class WOutputLayer;
 class WOutput;
-class WInputMethodHelper;
 class WSocket;
 class WSurface;
-class WToplevelSurface;
-class WSurfaceItem;
 WAYLIB_SERVER_END_NAMESPACE
 
 QW_BEGIN_NAMESPACE
@@ -43,15 +41,12 @@ QW_END_NAMESPACE
 WAYLIB_SERVER_USE_NAMESPACE
 QW_USE_NAMESPACE
 
-class Output;
-class SurfaceWrapper;
 class RootSurfaceContainer;
-class LayerSurfaceContainer;
+class Output;
 class Helper : public WSeatEventFilter
 {
     friend class RootSurfaceContainer;
     Q_OBJECT
-    Q_PROPERTY(RootSurfaceContainer* rootContainer READ rootContainer CONSTANT FINAL)
     Q_PROPERTY(OutputMode outputMode READ outputMode WRITE setOutputMode NOTIFY outputModeChanged FINAL)
     QML_ELEMENT
     QML_SINGLETON
@@ -73,7 +68,6 @@ public:
     Output* output() const;
     void init();
 
-    RootSurfaceContainer *rootContainer() const;
     Output *getOutput(WOutput *output) const;
 
     OutputMode outputMode() const;
@@ -108,6 +102,7 @@ private:
 
     // Greeter Backends
     Backend *m_greetd = nullptr;
+    PowerManager *m_powerManager = nullptr;
 
     // qtquick helper
     WOutputRenderWindow *m_renderWindow = nullptr;

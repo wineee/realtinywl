@@ -68,8 +68,8 @@
 
               services.greetd.enable = true;
               services.greetd.settings.default_session = {
-                #command = "cage -s -mlast -- regreet";
-                command = "waygreet";
+                command = "cage -s -mlast -- regreet";
+                #command = "waygreet";
                 user = "greeter";
               };
               programs.regreet.enable = true;
@@ -87,6 +87,7 @@
               };
 
               programs.sway.enable = true;
+              programs.wayfire.enable = true;
               services.xserver = {
                 enable = true;
                 displayManager = {

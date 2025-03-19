@@ -52,6 +52,7 @@ Helper *Helper::m_instance = nullptr;
 Helper::Helper(QObject *parent)
     : WSeatEventFilter(parent)
     , m_greetd(new Backend)
+    , m_powerManager(new PowerManager)
     , m_renderWindow(new WOutputRenderWindow(this))
     , m_server(new WServer(this))
     , m_surfaceContainer(new RootSurfaceContainer(m_renderWindow->contentItem()))
@@ -95,6 +96,7 @@ void Helper::init()
     engine->setContextForObject(m_renderWindow->contentItem(), engine->rootContext());
     //m_surfaceContainer->setQmlEngine(engine);
     engine->rootContext()->setContextProperty("Greetd", m_greetd);
+    engine->rootContext()->setContextProperty("WayPowerManager", m_powerManager);
 
     m_surfaceContainer->init(m_server);
     m_seat = m_server->attach<WSeat>();
@@ -162,11 +164,6 @@ void Helper::init()
     m_backend->handle()->start();
 
     qInfo() << "Listing on:" << m_socket->fullServerName();
-}
-
-RootSurfaceContainer *Helper::rootContainer() const
-{
-    return m_surfaceContainer;
 }
 
 bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)

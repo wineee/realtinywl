@@ -82,6 +82,7 @@ Item {
             echoMode: TextInput.Password
             focus: true
             placeholderText: "Enter your password"
+            placeholderTextColor: Qt.rgba(1, 1, 1, 0.4)
             width: 250
             background: Rectangle {
                 implicitWidth: 100
@@ -138,7 +139,7 @@ Item {
         SimpleButton {
             id: suspend
             text: "suspend"
-            //onClicked: sddm.suspend()
+            onClicked: WayPowerManager.suspend()
             //visible: sddm.canSuspend
             KeyNavigation.backtab: loginButton
             KeyNavigation.tab: hibernate
@@ -147,7 +148,7 @@ Item {
         SimpleButton {
             id: hibernate
             text: "hibernate"
-            //onClicked: sddm.hibernate()
+            onClicked: WayPowerManager.hibernate()
             //visible: sddm.canHibernate
             KeyNavigation.backtab: suspend
             KeyNavigation.tab: restart
@@ -156,7 +157,7 @@ Item {
         SimpleButton {
             id: restart
             text: "reboot"
-            //onClicked: sddm.reboot()
+            onClicked: WayPowerManager.reboot()
             //visible: sddm.canReboot
             KeyNavigation.backtab: suspend
             KeyNavigation.tab: shutdown
@@ -165,10 +166,10 @@ Item {
         SimpleButton {
             id: shutdown
             text: "shutdown"
-            //onClicked: sddm.powerOff()
+            onClicked: WayPowerManager.powerOff()
             //visible: sddm.canPowerOff
             KeyNavigation.backtab: restart
-            //KeyNavigation.tab: session
+            KeyNavigation.tab: session
         }
     }
 
