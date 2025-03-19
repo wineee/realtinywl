@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
     Q_ASSERT(qw_buffer::get_objects().isEmpty());
 
     WServer::initializeQPA();
-    //QQuickStyle::setStyle("Material");
 
     QPointer<Helper> helper;
     int quitCode = 0;

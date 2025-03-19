@@ -28,8 +28,6 @@ class WOutputItem;
 class WOutputViewport;
 class WOutputLayer;
 class WOutput;
-class WSocket;
-class WSurface;
 WAYLIB_SERVER_END_NAMESPACE
 
 QW_BEGIN_NAMESPACE
@@ -76,13 +74,7 @@ public:
     Q_INVOKABLE void addOutput();
 
 signals:
-    void socketEnabledChanged();
-    void keyboardFocusSurfaceChanged();
-    void activatedSurfaceChanged();
     void primaryOutputChanged();
-    void currentUserIdChanged();
-
-    void animationSpeedChanged();
     void outputModeChanged();
 
 private:
@@ -109,20 +101,15 @@ private:
 
     // wayland helper
     WServer *m_server = nullptr;
-    WSocket *m_socket = nullptr;
     WSeat *m_seat = nullptr;
     WBackend *m_backend = nullptr;
     qw_renderer *m_renderer = nullptr;
     qw_allocator *m_allocator = nullptr;
 
-    // protocols
-    qw_compositor *m_compositor = nullptr;
-
     // privaet data
     QList<Output*> m_outputList;
 
     RootSurfaceContainer *m_surfaceContainer = nullptr;
-    int m_currentUserId = -1;
     OutputMode m_mode = OutputMode::Extension;
 };
 

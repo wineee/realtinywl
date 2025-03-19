@@ -29,9 +29,6 @@
 #include <qwlogging.h>
 #include <qwallocator.h>
 #include <qwrenderer.h>
-#include <qwcompositor.h>
-#include <qwbuffer.h>
-#include <qwviewporter.h>
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -145,25 +142,9 @@ void Helper::init()
 
     m_allocator = qw_allocator::autocreate(*m_backend->handle(), *m_renderer);
     m_renderer->init_wl_display(*m_server->handle());
-
-    // free follow display
-    m_compositor = qw_compositor::create(*m_server->handle(), 6, *m_renderer);
-    qw_viewporter::create(*m_server->handle());
     m_renderWindow->init(m_renderer, m_allocator);
 
-    bool freezeClientWhenDisable = false;
-    m_socket = new WSocket(freezeClientWhenDisable);
-    if (m_socket->autoCreate()) {
-        m_server->addSocket(m_socket);
-    } else {
-        delete m_socket;
-        qCritical("Failed to create socket");
-        return;
-    }
-
     m_backend->handle()->start();
-
-    qInfo() << "Listing on:" << m_socket->fullServerName();
 }
 
 bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)
