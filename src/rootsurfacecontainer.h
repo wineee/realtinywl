@@ -9,7 +9,6 @@
 WAYLIB_SERVER_BEGIN_NAMESPACE
 class WSurface;
 class WSurfaceItem;
-class WToplevelSurface;
 class WOutputLayout;
 class WCursor;
 WAYLIB_SERVER_END_NAMESPACE
@@ -25,13 +24,6 @@ class RootSurfaceContainer : public QQuickItem
 
 public:
     explicit RootSurfaceContainer(QQuickItem *parent);
-
-    enum ContainerZOrder {
-        NormalZOrder = 0,
-        TaskBarZOrder = 3,
-        MenuBarZOrder = 3,
-        PopupZOrder = 4,
-    };
 
     void init(WServer *server);
 

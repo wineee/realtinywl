@@ -6,14 +6,9 @@
 #include "rootsurfacecontainer.h"
 
 #include <woutputitem.h>
-#include <wsurfaceitem.h>
 #include <woutputrenderwindow.h>
-#include <wxdgsurface.h>
-#include <wxdgpopupsurface.h>
-#include <winputpopupsurface.h>
 #include <woutputlayout.h>
 #include <wquicktextureproxy.h>
-#include <wxdgpopupsurfaceitem.h>
 
 #include <qwoutputlayout.h>
 

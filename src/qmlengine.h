@@ -19,7 +19,6 @@ WAYLIB_SERVER_END_NAMESPACE
 WAYLIB_SERVER_USE_NAMESPACE
 
 class WallpaperImageProvider;
-class SurfaceWrapper;
 class Output;
 class Workspace;
 class WorkspaceModel;
@@ -30,9 +29,7 @@ public:
     explicit QmlEngine(QObject *parent = nullptr);
 
     QQuickItem *createMenuBar(WOutputItem *output, QQuickItem *parent);
-    QQmlComponent *surfaceContentComponent() { return &surfaceContent; }
 
 private:
-    QQmlComponent surfaceContent;
     QQmlComponent menuBarComponent;
 };

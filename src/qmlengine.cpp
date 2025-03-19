@@ -10,7 +10,6 @@
 
 QmlEngine::QmlEngine(QObject *parent)
     : QQmlApplicationEngine(parent)
-    , surfaceContent(this, "WayGreet", "SurfaceContent")
     , menuBarComponent(this, "WayGreet", "OutputMenuBar")
 {
 }

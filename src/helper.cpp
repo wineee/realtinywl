@@ -9,8 +9,6 @@
 #include <WServer>
 #include <WOutput>
 #include <qqmlengine.h>
-#include <wxdgpopupsurface.h>
-#include <wxdgtoplevelsurface.h>
 #include <wrenderhelper.h>
 #include <WBackend>
 #include <woutputitem.h>
