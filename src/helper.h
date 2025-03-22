@@ -83,8 +83,6 @@ private:
 
     int indexOfOutput(WOutput *output) const;
 
-    void setOutputProxy(Output *output);
-
     void setCursorPosition(const QPointF &position);
 
     bool beforeDisposeEvent(WSeat *seat, QWindow *watched, QInputEvent *event) override;

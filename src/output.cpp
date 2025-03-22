@@ -14,8 +14,6 @@
 
 #include <QQmlEngine>
 
-Q_LOGGING_CATEGORY(qLcLayerShell, "WayGreet.shell.layer", QtWarningMsg)
-
 Output *Output::createPrimary(WOutput *output, QQmlEngine *engine, QObject *parent)
 {
     QQmlComponent delegate(engine, "WayGreet", "PrimaryOutput");
@@ -77,11 +75,6 @@ Output::Output(WOutputItem *output, QObject *parent)
 
 Output::~Output()
 {
-    if (m_taskBar) {
-        delete m_taskBar;
-        m_taskBar = nullptr;
-    }
-
     if (m_menuBar) {
         delete m_menuBar;
         m_menuBar = nullptr;

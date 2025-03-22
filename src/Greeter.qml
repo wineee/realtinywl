@@ -34,18 +34,9 @@ Item {
         }
     }
 
-    Item {
+    Image {
         anchors.fill: parent
-
-        Rectangle {
-            anchors.fill: parent
-            color: "blue"
-        }
-
-        Image {
-            anchors.fill: parent
-            source: "file:///home/rewine/pic/desktop.jpg" // TODO: use config
-        }
+        source: "file:///home/rewine/pic/desktop.png" // TODO: use config
     }
 
     ListModel {

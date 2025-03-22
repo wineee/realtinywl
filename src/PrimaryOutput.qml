@@ -78,6 +78,11 @@ OutputItem {
         }
     }
 
+    Rectangle {
+        anchors.fill: parent
+        color: "#197e4a"
+    }
+
     Greeter {
         anchors.fill: parent
     }

@@ -8,7 +8,6 @@
 
 #include <WServer>
 #include <WOutput>
-#include <qqmlengine.h>
 #include <wrenderhelper.h>
 #include <WBackend>
 #include <woutputitem.h>
@@ -19,9 +18,7 @@
 #include <woutputlayout.h>
 #include <woutputviewport.h>
 #include <wseat.h>
-#include <wsocket.h>
 
-#include <qwbackend.h>
 #include <qwdisplay.h>
 #include <qwoutput.h>
 #include <qwlogging.h>
@@ -31,15 +28,12 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QQuickStyle>
-#include <QProcess>
 #include <QMouseEvent>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QLoggingCategory>
 #include <QKeySequence>
 #include <QQmlComponent>
-#include <QVariant>
 
 #define WLR_FRACTIONAL_SCALE_V1_VERSION 1
 
@@ -251,25 +245,20 @@ void Helper::setOutputMode(OutputMode mode)
         if (m_outputList.at(i) == m_surfaceContainer->primaryOutput())
             continue;
 
-        Output *o;
-        if (mode == OutputMode::Copy) {
-            o = Output::createCopy(m_outputList.at(i)->output(), m_surfaceContainer->primaryOutput(), qmlEngine(), this);
-            m_surfaceContainer->removeOutput(m_outputList.at(i));
-        } else if(mode == OutputMode::Extension) {
+        Output *o = nullptr;
+        if (mode == OutputMode::Extension) {
             o = Output::createPrimary(m_outputList.at(i)->output(), qmlEngine(), this);
             o->outputItem()->stackBefore(m_surfaceContainer);
             m_surfaceContainer->addOutput(o);
             enableOutput(o->output());
+        } else { // Copy
+            o = Output::createCopy(m_outputList.at(i)->output(), m_surfaceContainer->primaryOutput(), qmlEngine(), this);
+            m_surfaceContainer->removeOutput(m_outputList.at(i));
         }
 
         m_outputList.at(i)->deleteLater();
         m_outputList.replace(i,o);
     }
-}
-
-void Helper::setOutputProxy(Output *output)
-{
-
 }
 
 Helper::OutputMode Helper::outputMode() const

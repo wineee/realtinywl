@@ -63,46 +63,48 @@ public:
     }
     using Capabilities = PowerManager::Capabilities;
 
-    PowerManager::Capabilities capabilities() const {
+    PowerManager::Capabilities capabilities() const override {
         Capabilities caps(PowerManager::Capability::PowerOff | PowerManager::Capability::Reboot);
 
         QDBusReply<bool> reply;
 
-               // suspend
+        // suspend
         reply = m_interface->call(QStringLiteral("SuspendAllowed"));
         if (reply.isValid() && reply.value())
             caps |= PowerManager::Capability::Suspend;
 
-               // hibernate
+        // hibernate
         reply = m_interface->call(QStringLiteral("HibernateAllowed"));
         if (reply.isValid() && reply.value())
             caps |= PowerManager::Capability::Hibernate;
 
-               // return capabilities
+        // return capabilities
         return caps;
     }
 
-    void powerOff() const {
-        //auto command = QProcess::splitCommand(mainConfig.HaltCommand.get());
-        //const QString program = command.takeFirst();
-        //QProcess::execute(program, command);
+    void powerOff() const override {
+        // TODO(rewine): use config
+        auto command = QProcess::splitCommand(QString("/usr/bin/systemctl poweroff"));
+        const QString program = command.takeFirst();
+        QProcess::execute(program, command);
     }
 
-    void reboot() const {
-        //auto command = QProcess::splitCommand(mainConfig.RebootCommand.get());
-        //const QString program = command.takeFirst();
-        //QProcess::execute(program, command);
+    void reboot() const override {
+        // TODO(rewine): use config
+        auto command = QProcess::splitCommand(QString( "/usr/bin/systemctl reboot"));
+        const QString program = command.takeFirst();
+        QProcess::execute(program, command);
     }
 
-    void suspend() const {
+    void suspend() const override {
         m_interface->call(QStringLiteral("Suspend"));
     }
 
-    void hibernate() const {
+    void hibernate() const override {
         m_interface->call(QStringLiteral("Hibernate"));
     }
 
-    void hybridSleep() const {
+    void hybridSleep() const override {
     }
 
 private:
@@ -131,58 +133,58 @@ public:
         delete m_interface;
     }
 
-    PowerManager::Capabilities capabilities() const {
+    PowerManager::Capabilities capabilities() const override {
         PowerManager::Capabilities caps = PowerManager::Capability::None;
 
         QDBusReply<QString> reply;
 
-               // power off
+        // power off
         reply = m_interface->call(QStringLiteral("CanPowerOff"));
         if (reply.isValid() && (reply.value() == QLatin1String("yes")))
             caps |= PowerManager::Capability::PowerOff;
 
-               // reboot
+        // reboot
         reply = m_interface->call(QStringLiteral("CanReboot"));
         if (reply.isValid() && (reply.value() == QLatin1String("yes")))
             caps |= PowerManager::Capability::Reboot;
 
-               // suspend
+        // suspend
         reply = m_interface->call(QStringLiteral("CanSuspend"));
         if (reply.isValid() && (reply.value() == QLatin1String("yes")))
             caps |= PowerManager::Capability::Suspend;
 
-               // hibernate
+        // hibernate
         reply = m_interface->call(QStringLiteral("CanHibernate"));
         if (reply.isValid() && (reply.value() == QLatin1String("yes")))
             caps |= PowerManager::Capability::Hibernate;
 
-               // hybrid sleep
+        // hybrid sleep
         reply = m_interface->call(QStringLiteral("CanHybridSleep"));
         if (reply.isValid() && (reply.value() == QLatin1String("yes")))
             caps |= PowerManager::Capability::HybridSleep;
 
-               // return capabilities
+        // return capabilities
         return caps;
     }
 
-    void powerOff() const {
+    void powerOff() const override {
         m_interface->call(QStringLiteral("PowerOff"), true);
     }
 
-    void reboot() const {
+    void reboot() const override{
         //if (!daemonApp->testing())
             m_interface->call(QStringLiteral("Reboot"), true);
     }
 
-    void suspend() const {
+    void suspend() const override {
         m_interface->call(QStringLiteral("Suspend"), true);
     }
 
-    void hibernate() const {
+    void hibernate() const override {
         m_interface->call(QStringLiteral("Hibernate"), true);
     }
 
-    void hybridSleep() const {
+    void hybridSleep() const override {
         m_interface->call(QStringLiteral("HybridSleep"), true);
     }
 

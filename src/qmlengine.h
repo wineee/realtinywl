@@ -18,10 +18,6 @@ WAYLIB_SERVER_END_NAMESPACE
 
 WAYLIB_SERVER_USE_NAMESPACE
 
-class WallpaperImageProvider;
-class Output;
-class Workspace;
-class WorkspaceModel;
 class QmlEngine : public QQmlApplicationEngine
 {
     Q_OBJECT

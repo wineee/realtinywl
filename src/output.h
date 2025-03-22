@@ -10,8 +10,6 @@
 
 Q_MOC_INCLUDE(<woutputitem.h>)
 
-Q_DECLARE_LOGGING_CATEGORY(qLcLayerShell)
-
 WAYLIB_SERVER_BEGIN_NAMESPACE
 class WOutput;
 class WOutputItem;
@@ -61,18 +59,14 @@ public Q_SLOTS:
     void updatePrimaryOutputHardwareLayers();
 
 private:
-    friend class SurfaceWrapper;
-
     std::pair<WOutputViewport*, QQuickItem*> getOutputItemProperty();
 
     Type m_type;
     WOutputItem *m_item;
     Output *m_proxy = nullptr;
-    QPointer<QQuickItem> m_taskBar;
     QPointer<QQuickItem> m_menuBar;
     WOutputViewport *m_outputViewport;
 
-    QSizeF m_lastSizeOnLayoutNonLayerSurfaces;
     QList<WOutputLayer *> m_hardwareLayersOfPrimaryOutput;
 };
 
