@@ -8,7 +8,7 @@ Item {
     readonly property color backgroundColor: Qt.rgba(0, 0, 0, 0.4)
     readonly property color hoverBackgroundColor: Qt.rgba(0, 0, 0, 0.6)
 
-    LayoutMirroring.enabled: Qt.locale().textDirection == Qt.RightToLeft
+    LayoutMirroring.enabled: Qt.locale().textDirection === Qt.RightToLeft
     LayoutMirroring.childrenInherit: true
 
     Connections {
@@ -17,7 +17,7 @@ Item {
         function onSessionSuccess() {
         }
         function onSessionError(type, description) {
-            if (type == "auth_error") {
+            if (type === "auth_error") {
                 pw_entry.clear()
                 pw_entry.focus = true
 
@@ -172,11 +172,11 @@ Item {
             top: parent.top
             topMargin: 10
         }
-        currentIndex: sessionModel.lastIndex
-        model: sessionModel
+        currentIndex: Helper.sessionModel.lastIndex
+        model: Helper.sessionModel
         textRole: "name"
         width: 200
-        visible: sessionModel.rowCount() > 1
+        visible: Helper.sessionModel.rowCount() > 1
         KeyNavigation.backtab: shutdown
         KeyNavigation.tab: user_entry
     }

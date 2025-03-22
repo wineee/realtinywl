@@ -6,6 +6,7 @@
 #include "qmlengine.h"
 #include "backend.h"
 #include "powermanager.h"
+#include "sessionmodel.h"
 
 #include <wglobal.h>
 #include <wqmlcreator.h>
@@ -46,6 +47,7 @@ class Helper : public WSeatEventFilter
     friend class RootSurfaceContainer;
     Q_OBJECT
     Q_PROPERTY(OutputMode outputMode READ outputMode WRITE setOutputMode NOTIFY outputModeChanged FINAL)
+    Q_PROPERTY(SessionModel *sessionModel READ sessionModel CONSTANT)
     QML_ELEMENT
     QML_SINGLETON
 
@@ -61,6 +63,7 @@ public:
 
     static Helper *instance();
 
+    SessionModel *sessionModel() const;
     QmlEngine *qmlEngine() const;
     WOutputRenderWindow *window() const;
     Output* output() const;
@@ -93,6 +96,7 @@ private:
     // Greeter Backends
     Backend *m_greetd = nullptr;
     PowerManager *m_powerManager = nullptr;
+    SessionModel *m_sessionModel = nullptr;
 
     // qtquick helper
     WOutputRenderWindow *m_renderWindow = nullptr;

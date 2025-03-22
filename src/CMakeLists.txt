@@ -28,15 +28,17 @@ qt_add_qml_module(${TARGET}
     URI WayGreet
     VERSION "1.0"
 
-    SOURCES helper.h helper.cpp
-    SOURCES output.h output.cpp
-    SOURCES qmlengine.h qmlengine.cpp
-    SOURCES rootsurfacecontainer.h rootsurfacecontainer.cpp
     SOURCES
+        helper.h helper.cpp
+        output.h output.cpp
+        qmlengine.h qmlengine.cpp
+        rootsurfacecontainer.h rootsurfacecontainer.cpp
         ipc.h ipc.cpp
         backend.h backend.cpp
         session.h session.cpp
         powermanager.h powermanager.cpp
+        sessiontype.h sessiontype.cpp
+        sessionmodel.h sessionmodel.cpp
 
     QML_FILES PrimaryOutput.qml
     QML_FILES CopyOutput.qml
